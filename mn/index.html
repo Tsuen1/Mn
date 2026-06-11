@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MN数据看板</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .header h1 { font-size: 28px; margin-bottom: 8px; }
+        .header .subtitle { font-size: 14px; opacity: 0.9; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-2px); }
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+            margin: 10px 0;
+        }
+        .stat-card .label {
+            font-size: 14px;
+            color: #666;
+        }
+        .stat-card .change {
+            font-size: 13px;
+            margin-top: 5px;
+        }
+        .change.up { color: #e74c3c; }
+        .change.down { color: #27ae60; }
+        .section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .section h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .chart-container {
+            width: 100%;
+            height: 400px;
+            margin-bottom: 20px;
+        }
+        .chart-container.hidden { display: none; }
+        .chart-container.map { height: 600px; }
+        .selector-group {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .selector-group label {
+            font-size: 14px;
+            color: #555;
+            margin-right: 5px;
+        }
+        .selector-group select {
+            padding: 8px 15px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+            cursor: pointer;
+            min-width: 120px;
+        }
+        .trend-hint {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+            font-size: 16px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        th, td {
+            padding: 10px 8px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        tr:hover { background: #f8f9fa; }
+        .trend-up { color: #e74c3c; }
+        .trend-down { color: #27ae60; }
+        .trend-flat { color: #999; }
+        .scroll-table {
+            max-height: 500px;
+            overflow-y: auto;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+            font-size: 12px;
+        }
+        .login-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 360px;
+            text-align: center;
+        }
+        .login-box h2 {
+            font-size: 22px;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        .login-box p {
+            font-size: 13px;
+            color: #999;
+            margin-bottom: 25px;
+        }
+        .login-box input {
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+        }
+        .login-box input:focus {
+            border-color: #667eea;
+        }
+        .login-box button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .login-box button:hover {
+            opacity: 0.9;
+        }
+        .login-error {
+            color: #e74c3c;
+            font-size: 13px;
+            margin-top: 10px;
+            display: none;
+        }
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .header h1 { font-size: 22px; }
+            .chart-container { height: 300px; }
+            .chart-container.map { height: 400px; }
+            .selector-group { flex-direction: column; gap: 10px; }
+            .login-box { width: 90%; padding: 30px 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="loginOverlay" class="login-overlay">
+        <div class="login-box">
+            <h2>🔐 MN数据看板</h2>
+            <p>授权用户专用，请登录</p>
+            <input type="text" id="loginUser" placeholder="用户名" autocomplete="username">
+            <input type="password" id="loginPass" placeholder="密码" autocomplete="current-password">
+            <button onclick="doLogin()">登 录</button>
+            <div id="loginError" class="login-error">用户名或密码错误</div>
+        </div>
+    </div>
+
+    <div class="header">
+        <h1>📊 MN数据看板</h1>
+        <div class="subtitle">数据更新至：2026-06-10 | 共 2 天数据 | 138 条记录</div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="label">最新日期总用户</div>
+            <div class="value">42,080</div>
+            <div class="change trend-down">-20 (-0.05%)</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">最新日期总电池</div>
+            <div class="value">92,088</div>
+            <div class="change trend-up">+14 (+0.02%)</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">覆盖省份</div>
+            <div class="value">21</div>
+            <div class="label">个省份</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">覆盖城市</div>
+            <div class="value">69</div>
+            <div class="label">个经营区域</div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>📈 总用户数趋势</h2>
+        <div id="totalTrendChart" class="chart-container"></div>
+    </div>
+
+    <div class="section">
+        <h2>🔍 城市明细查询</h2>
+        <div class="selector-group">
+            <div>
+                <label>选择省份：</label>
+                <select id="provinceSelect" onchange="onProvinceChange()">
+                    <option value="">全部</option>
+                    <option value="上海">上海</option>
+<option value="云南">云南</option>
+<option value="内蒙古">内蒙古</option>
+<option value="四川">四川</option>
+<option value="天津">天津</option>
+<option value="安徽">安徽</option>
+<option value="山东">山东</option>
+<option value="山西">山西</option>
+<option value="广东">广东</option>
+<option value="广西">广西</option>
+<option value="新疆">新疆</option>
+<option value="江苏">江苏</option>
+<option value="江西">江西</option>
+<option value="河北">河北</option>
+<option value="河南">河南</option>
+<option value="浙江">浙江</option>
+<option value="海南">海南</option>
+<option value="甘肃">甘肃</option>
+<option value="福建">福建</option>
+<option value="贵州">贵州</option>
+<option value="陕西">陕西</option>
+                </select>
+            </div>
+            <div>
+                <label>选择城市：</label>
+                <select id="citySelect" onchange="onCityChange()" disabled>
+                    <option value="">请先选省份</option>
+                </select>
+            </div>
+        </div>
+        <div class="scroll-table">
+            <table id="cityTable">
+                <thead>
+                    <tr>
+                        <th>日期</th>
+                        <th>省份</th>
+                        <th>城市合并</th>
+                        <th>区域</th>
+                        <th>经营模式</th>
+                        <th>用户数</th>
+                        <th>电池数</th>
+                        <th>用户变化</th>
+                    </tr>
+                </thead>
+                <tbody id="cityTableBody">
+                    <tr data-province="上海" data-city="上海">
+            <td>2026-06-10</td>
+            <td>上海</td>
+            <td>上海</td>
+            <td>上海</td>
+            <td>直营</td>
+            <td>8,263</td>
+            <td>18,915</td>
+            <td class="trend-down">-12</td>
+        </tr><tr data-province="浙江" data-city="宁波-浙江">
+            <td>2026-06-10</td>
+            <td>浙江</td>
+            <td>宁波-浙江</td>
+            <td>宁波</td>
+            <td>直营</td>
+            <td>4,822</td>
+            <td>9,703</td>
+            <td class="trend-down">-11</td>
+        </tr><tr data-province="天津" data-city="天津">
+            <td>2026-06-10</td>
+            <td>天津</td>
+            <td>天津</td>
+            <td>天津</td>
+            <td>分公司</td>
+            <td>3,834</td>
+            <td>8,173</td>
+            <td class="trend-up">+6</td>
+        </tr><tr data-province="江苏" data-city="南京-江苏">
+            <td>2026-06-10</td>
+            <td>江苏</td>
+            <td>南京-江苏</td>
+            <td>南京</td>
+            <td>直营</td>
+            <td>3,612</td>
+            <td>6,558</td>
+            <td class="trend-down">-21</td>
+        </tr><tr data-province="山东" data-city="青岛-山东">
+            <td>2026-06-10</td>
+            <td>山东</td>
+            <td>青岛-山东</td>
+            <td>青岛</td>
+            <td>直营</td>
+            <td>2,566</td>
+            <td>5,418</td>
+            <td class="trend-down">-15</td>
+        </tr><tr data-province="新疆" data-city="乌鲁木齐-新疆">
+            <td>2026-06-10</td>
+            <td>新疆</td>
+            <td>乌鲁木齐-新疆</td>
+            <td>乌鲁木齐</td>
+            <td>代理商</td>
+            <td>1,864</td>
+            <td>4,465</td>
+            <td class="trend-up">+19</td>
+        </tr><tr data-province="安徽" data-city="芜湖-安徽">
+            <td>2026-06-10</td>
+            <td>安徽</td>
+            <td>芜湖-安徽</td>
+            <td>芜湖</td>
+            <td>直营</td>
+            <td>1,808</td>
+            <td>2,983</td>
+            <td class="trend-down">-18</td>
+        </tr><tr data-province="浙江" data-city="温州-浙江">
+            <td>2026-06-10</td>
+            <td>浙江</td>
+            <td>温州-浙江</td>
+            <td>温州</td>
+            <td>直营</td>
+            <td>1,568</td>
+            <td>3,101</td>
+            <td class="trend-up">+1</td>
+        </tr><tr data-province="浙江" data-city="台州-浙江">
+            <td>2026-06-10</td>
+            <td>浙江</td>
+            <td>台州-浙江</td>
+            <td>台州</td>
+            <td>直营</td>
+            <td>1,388</td>
+            <td>2,592</td>
+            <td class="trend-up">+8</td>
+        </tr><tr data-province="新疆" data-city="新疆启航代理商-新疆">
+            <td>2026-06-10</td>
+            <td>新疆</td>
+            <td>新疆启航代理商-新疆</td>
+            <td>新疆启航代理商</td>
+            <td>代理商</td>
+            <td>1,241</td>
+            <td>2,522</td>
+            <td class="trend-up">+12</td>
+        </tr><tr data-province="广东" data-city="深圳-广东">
+            <td>2026-06-10</td>
+            <td>广东</td>
+            <td>深圳-广东</td>
+            <td>深圳</td>
+            <td>直营</td>
+            <td>1,202</td>
+            <td>2,383</td>
+            <td class="trend-down">-1</td>
+        </tr><tr data-province="江苏" data-city="盐城-江苏">
+            <td>2026-06-10</td>
+            <td>江苏</td>
+            <td>盐城-江苏</td>
+            <td>盐城</td>
+            <td>直营</td>
+            <td>815</td>
+            <td>1,277</td>
+            <td class="trend-down">-5</td>
+        </tr><tr data-province="浙江" data-city="金华市-浙江">
+            <td>2026-06-10</td>
+            <td>浙江</td>
+            <td>金华市-浙江</td>
+            <td>金华市</td>
+            <td>直营</td>
+            <td>744</td>
+            <td>1,662</td>
+            <td class="trend-up">+1</td>
+        </tr><tr data-province="山东" data-city="山东淄博-山东">
+            <td>2026-06-10</td>
+            <td>山东</td>
+            <td>山东淄博-山东</td>
+            <td>山东淄博</td>
+            <td>西南</td>
+            <td>551</td>
+            <td>994</td>
+            <td class="trend-up">+6</td>
+        </tr><tr data-province="安徽" data-city="马鞍山-安徽">
+            <td>2026-06-10</td>
+            <td>安徽</td>
+            <td>马鞍山-安徽</td>
+            <td>马鞍山</td>
+            <td>直营</td>
+            <td>512</td>
+            <td>778</td>
+            <td class="trend-up">+8</td>
+        </tr><tr data-province="四川" data-city="西昌-四川">
+            <td>2026-06-10</td>
+            <td>四川</td>
+            <td>西昌-四川</td>
+            <td>西昌</td>
+            <td>西南</td>
+            <td>489</td>
+            <td>891</td>
+            <td class="trend-down">-13</td>
+        </tr><tr data-province="江苏" data-city="苏州市区-江苏">
+            <td>2026-06-10</td>
+            <td>江苏</td>
+            <td>苏州市区-江苏</td>
+            <td>苏州市区</td>
+            <td>直营</td>
+            <td>481</td>
+            <td>1,023</td>
+            <td class="trend-down">-8</td>
+        </tr><tr data-province="陕西" data-city="西安-陕西">
+            <td>2026-06-10</td>
+            <td>陕西</td>
+            <td>西安-陕西</td>
+            <td>西安</td>
+            <td>代理商</td>
+            <td>477</td>
+            <td>1,356</td>
+            <td class="trend-up">+7</td>
+        </tr><tr data-province="安徽" data-city="铜陵-安徽">
+            <td>2026-06-10</td>
+            <td>安徽</td>
+            <td>铜陵-安徽</td>
+            <td>铜陵</td>
+            <td>直营</td>
+            <td>436</td>
+            <td>773</td>
+            <td class="trend-down">-1</td>
+        </tr><tr data-province="浙江" data-city="绍兴-浙江">
+            <td>2026-06-10</td>
+            <td>浙江</td>
+            <td>绍兴-浙江</td>
+            <td>绍兴</td>
+            <td>直营</td>
+            <td>371</td>
+            <td>728</td>
+            <td class="trend-down">-7</td>
+        </tr><tr data-province="江苏" data-city="南通-江苏">
+            <td>2026-06-10</td>
+            <td>江苏</td>
+            <td>南通-江苏</td>
+            <td>南通</td>
+            <td>直营</td>
+            <td>339</td>
+            <td>664</td>
+            <td class="trend-up">+4</td>
+        </tr><tr data-province="福建" data-city="福州-福建">
+            <td>2026-06-10</td>
+            <td>福建</td>
+            <td>福州-福建</td>
+            <td>福州</td>
+            <td>西南</td>
+            <td>312</td>
+            <td>2,399</td>
+            <td class="trend-up">+7</td>
+        </tr><tr data-province="云南" data-city="丽江-云南">
+            <td>2026-06-10</td>
+            <td>云南</td>
+            <td>丽江-云南</td>
+            <td>丽江</td>
+            <td>西南</td>
+            <td>311</td>
+            <td>544</td>
+            <td class="trend-down">-1</td>
+        </tr><tr data-province="江苏" data-city="常州-江苏">
+            <td>2026-06-10</td>
+            <td>江苏</td>
+            <td>常州-江苏</td>
+            <td>常州</td>
+            <td>直营</td>
+            <td>301</td>
+            <td>642</td>
+            <td class="trend-down">-3</td>
+        </tr><tr data-province="安徽" data-city="宣城-安徽">
+            <td>2026-06-10</td>
+            <td>安徽</td>
+            <td>宣城-安徽</td>
+            <td>宣城</td>
+            <td>合资公司</td>
+            <td>278</td>
+            <td>577</td>
+            <td class="trend-up">+3</td>
+        </tr><tr data-province="河北" data-city="唐山-河北">
+            <td>2026-06-10</td>
+            <td>河北</td>
+            <td>唐山-河北</td>
+            <td>唐山</td>
+            <td>代理商</td>
+            <td>258</td>
+            <td>685</td>
+            <td class="trend-flat">-</td>
+        </tr><tr data-province="江苏" data-city="无锡-江苏">
+            <td>2026-06-10</td>
+            <td>江苏</td>
+            <td>无锡-江苏</td>
+            <td>无锡</td>
+            <td>代理商</td>
+            <td>253</td>
+            <td>1,227</td>
+            <td class="trend-up">+3</td>
+        </tr><tr data-province="四川" data-city="四川达州-四川">
+            <td>2026-06-10</td>
+            <td>四川</td>
+            <td>四川达州-四川</td>
+            <td>四川达州</td>
+            <td>西南</td>
+            <td>248</td>
+            <td>433</td>
+            <td class="trend-up">+2</td>
+        </tr><tr data-province="四川" data-city="四川内江-四川">
+            <td>2026-06-10</td>
+            <td>四川</td>
+            <td>四川内江-四川</td>
+            <td>四川内江</td>
+            <td>西南</td>
+            <td>239</td>
+            <td>494</td>
+            <td class="trend-up">+1</td>
+        </tr><tr data-province="内蒙古" data-city="包头-内蒙古">
+            <td>2026-06-10</td>
+            <td>内蒙古</td>
+            <td>包头-内蒙古</td>
+            <td>包头</td>
+            <td>代理商</td>
+            <td>210</td>
+            <td>449</td>
+            <td class="trend-up">+5</td>
+        </tr><tr data-province="福建" data-city="厦门-福建">
+            <td>2026-06-10</td>
+            <td>福建</td>
+            <td>厦门-福建</td>
+            <td>厦门</td>
+            <td>西南</td>
+            <td>191</td>
+            <td>1,015</td>
+            <td class="trend-up">+2</td>
+        </tr><tr data-province="四川" data-city="四川广安-四川">
+            <td>2026-06-10</td>
+            <td>四川</td>
+            <td>四川广安-四川</td>
+            <td>四川广安</td>
+            <td>西南</td>
+            <td>178</td>
+            <td>451</td>
+            <td class="trend-down">-3</td>
+        </tr><tr data-province="山西" data-city="太原-山西">
+            <td>2026-06-10</td>
+            <td>山西</td>
+            <td>太原-山西</td>
+            <td>太原</td>
+            <td>直营</td>
+            <td>143</td>
+            <td>469</td>
+            <td class="trend-down">-3</td>
+        </tr><tr data-province="内蒙古" data-city="呼和浩特2-内蒙古">
+            <td>2026-06-10</td>
+            <td>内蒙古</td>
+            <td>呼和浩特2-内蒙古</td>
+            <td>呼和浩特2</td>
+            <td>代理商</td>
+            <td>140</td>
+            <td>200</td>
+            <td class="trend-up">+6</td>
+        </tr><tr data-province="四川" data-city="四川广元-四川">
+            <td>2026-06-10</td>
+            <td>四川</td>
+            <td>四川广元-四川</td>
+            <td>四川广元</td>
+            <td>西南</td>
+            <td>133</td>
+            <td>328</td>
+            <td class="trend-up">+3</td>
+        </tr><tr data-province="四川" data-city="简阳-四川">
+            <td>2026-06-10</td>
+            <td>四川</td>
+            <td>简阳-四川</td>
+            <td>简阳</td>
+            <td>西南</td>
+            <td>131</td>
+            <td>208</td>
+            <td class="trend-flat">-</td>
+        </tr><tr data-province="安徽" data-city="阜阳-安徽">
+            <td>2026-06-10</td>
+            <td>安徽</td>
+            <td>阜阳-安徽</td>
+            <td>阜阳</td>
+            <td>合资公司</td>
+            <td>125</td>
+            <td>392</td>
+            <td class="trend-up">+1</td>
+        </tr><tr data-province="浙江" data-city="衢州-浙江">
+            <td>2026-06-10</td>
+            <td>浙江</td>
+            <td>衢州-浙江</td>
+            <td>衢州</td>
+            <td>直营</td>
+            <td>124</td>
+            <td>319</td>
+            <td class="trend-down">-2</td>
+        </tr><tr data-province="浙江" data-city="嘉兴-浙江">
+            <td>2026-06-10</td>
+            <td>浙江</td>
+            <td>嘉兴-浙江</td>
+            <td>嘉兴</td>
+            <td>直营</td>
+            <td>118</td>
+            <td>306</td>
+            <td class="trend-up">+4</td>
+        </tr><tr data-province="甘肃" data-city="定西市-甘肃">
+            <td>2026-06-10</td>
+            <td>甘肃</td>
+            <td>定西市-甘肃</td>
+            <td>定西市</td>
+            <td>代理商</td>
+            <td>107</td>
+            <td>139</td>
+            <td class="trend-down">-4</td>
+        </tr><tr data-province="福建" data-city="福建南安-福建">
+            <td>2026-06-10</td>
+            <td>福建</td>
+            <td>福建南安-福建</td>
+            <td>福建南安</td>
+            <td>西南</td>
+            <td>97</td>
+            <td>310</td>
+            <td class="trend-flat">-</td>
+        </tr><tr data-province="贵州" data-city="铜仁-贵州">
+            <td>2026-06-10</td>
+            <td>贵州</td>
+            <td>铜仁-贵州</td>
+            <td>铜仁</td>
+            <td>代理商</td>
+            <td>91</td>
+            <td>234</td>
+            <td class="trend-up">+3</td>
+        </tr><tr data-province="上海" data-city="上海快递站点">
+            <td>2026-06-10</td>
+            <td>上海</td>
+            <td>上海快递站点</td>
+            <td>上海快递站点</td>
+            <td>直营</td>
+            <td>86</td>
+            <td>182</td>
+            <td class="trend-flat">-</td>
+        </tr><tr data-province="浙江" data-city="台州快递网点-浙江">
+            <td>2026-06-10</td>
+            <td>浙江</td>
+            <td>台州快递网点-浙江</td>
+            <td>台州快递网点</td>
+            <td>直营</td>
+            <td>83</td>
+            <td>156</td>
+            <td class="trend-down">-4</td>
+        </tr><tr data-province="山东" data-city="日照-山东">
+            <td>2026-06-10</td>
+            <td>山东</td>
+            <td>日照-山东</td>
+            <td>日照</td>
+            <td>代理商</td>
+            <td>81</td>
+            <td>361</td>
+            <td class="trend-up">+1</td>
+        </tr><tr data-province="海南" data-city="三亚-海南">
+            <td>2026-06-10</td>
+            <td>海南</td>
+            <td>三亚-海南</td>
+            <td>三亚</td>
+            <td>代理商</td>
+            <td>77</td>
+            <td>273</td>
+            <td class="trend-up">+4</td>
+        </tr><tr data-province="浙江" data-city="丽水-浙江">
+            <td>2026-06-10</td>
+            <td>浙江</td>
+            <td>丽水-浙江</td>
+            <td>丽水</td>
+            <td>直营</td>
+            <td>76</td>
+            <td>145</td>
+            <td class="trend-up">+2</td>
+        </tr><tr data-province="广西" data-city="广西北海-广西">
+            <td>2026-06-10</td>
+            <td>广西</td>
+            <td>广西北海-广西</td>
+            <td>广西北海</td>
+            <td>合资公司</td>
+            <td>59</td>
+            <td>295</td>
+            <td class="trend-up">+4</td>
+        </tr><tr data-province="江苏" data-city="张家港-江苏">
+            <td>2026-06-10</td>
+            <td>江苏</td>
+            <td>张家港-江苏</td>
+            <td>张家港</td>
+            <td>直营</td>
+            <td>51</td>
+            <td>101</td>
+            <td class="trend-down">-4</td>
+        </tr><tr data-province="江苏" data-city="江阴-江苏">
+            <td>2026-06-10</td>
+            <td>江苏</td>
+            <td>江阴-江苏</td>
+            <td>江阴</td>
+            <td>直营</td>
+            <td>43</td>
+            <td>92</td>
+            <td class="trend-down">-2</td>
+        </tr><tr data-province="江苏" data-city="溧阳-江苏">
+            <td>2026-06-10</td>
+            <td>江苏</td>
+            <td>溧阳-江苏</td>
+            <td>溧阳</td>
+            <td>直营</td>
+            <td>35</td>
+            <td>94</td>
+            <td class="trend-up">+1</td>
+        </tr><tr data-province="河南" data-city="信阳-河南">
+            <td>2026-06-10</td>
+            <td>河南</td>
+            <td>信阳-河南</td>
+            <td>信阳</td>
+            <td>直营</td>
+            <td>31</td>
+            <td>248</td>
+            <td class="trend-down">-5</td>
+        </tr><tr data-province="江苏" data-city="宜兴-江苏">
+            <td>2026-06-10</td>
+            <td>江苏</td>
+            <td>宜兴-江苏</td>
+            <td>宜兴</td>
+            <td>直营</td>
+            <td>23</td>
+            <td>73</td>
+            <td class="trend-flat">-</td>
+        </tr><tr data-province="山西" data-city="吕梁市岚县-山西">
+            <td>2026-06-10</td>
+            <td>山西</td>
+            <td>吕梁市岚县-山西</td>
+            <td>吕梁市岚县</td>
+            <td>直营</td>
+            <td>20</td>
+            <td>41</td>
+            <td class="trend-flat">-</td>
+        </tr><tr data-province="江西" data-city="宁都县-江西">
+            <td>2026-06-10</td>
+            <td>江西</td>
+            <td>宁都县-江西</td>
+            <td>宁都县</td>
+            <td>代理商</td>
+            <td>15</td>
+            <td>40</td>
+            <td class="trend-up">+1</td>
+        </tr><tr data-province="浙江" data-city="舟山-浙江">
+            <td>2026-06-10</td>
+            <td>浙江</td>
+            <td>舟山-浙江</td>
+            <td>舟山</td>
+            <td>代理商</td>
+            <td>12</td>
+            <td>126</td>
+            <td class="trend-down">-1</td>
+        </tr><tr data-province="山东" data-city="滨州-山东">
+            <td>2026-06-10</td>
+            <td>山东</td>
+            <td>滨州-山东</td>
+            <td>滨州</td>
+            <td>西南</td>
+            <td>11</td>
+            <td>186</td>
+            <td class="trend-flat">-</td>
+        </tr><tr data-province="山西" data-city="朔州-山西">
+            <td>2026-06-10</td>
+            <td>山西</td>
+            <td>朔州-山西</td>
+            <td>朔州</td>
+            <td>代理商</td>
+            <td>2</td>
+            <td>259</td>
+            <td class="trend-up">+1</td>
+        </tr><tr data-province="云南" data-city="楚雄-云南">
+            <td>2026-06-10</td>
+            <td>云南</td>
+            <td>楚雄-云南</td>
+            <td>楚雄</td>
+            <td>西南</td>
+            <td>1</td>
+            <td>166</td>
+            <td class="trend-flat">-</td>
+        </tr><tr data-province="山东" data-city="济南-山东">
+            <td>2026-06-10</td>
+            <td>山东</td>
+            <td>济南-山东</td>
+            <td>济南</td>
+            <td>直营</td>
+            <td>1</td>
+            <td>297</td>
+            <td class="trend-down">-1</td>
+        </tr><tr data-province="河南" data-city="南阳-河南">
+            <td>2026-06-10</td>
+            <td>河南</td>
+            <td>南阳-河南</td>
+            <td>南阳</td>
+            <td>直营</td>
+            <td>1</td>
+            <td>33</td>
+            <td class="trend-down">-1</td>
+        </tr><tr data-province="河南" data-city="驻马店-河南">
+            <td>2026-06-10</td>
+            <td>河南</td>
+            <td>驻马店-河南</td>
+            <td>驻马店</td>
+            <td>直营</td>
+            <td>1</td>
+            <td>18</td>
+            <td class="trend-flat">-</td>
+        </tr><tr data-province="云南" data-city="芒市-云南">
+            <td>2026-06-10</td>
+            <td>云南</td>
+            <td>芒市-云南</td>
+            <td>芒市</td>
+            <td>西南</td>
+            <td>0</td>
+            <td>4</td>
+            <td class="trend-flat">-</td>
+        </tr><tr data-province="广东" data-city="广东韶清-广东">
+            <td>2026-06-10</td>
+            <td>广东</td>
+            <td>广东韶清-广东</td>
+            <td>广东韶清</td>
+            <td>直营</td>
+            <td>0</td>
+            <td>4</td>
+            <td class="trend-flat">-</td>
+        </tr><tr data-province="江苏" data-city="常熟-江苏">
+            <td>2026-06-10</td>
+            <td>江苏</td>
+            <td>常熟-江苏</td>
+            <td>常熟</td>
+            <td>代理商</td>
+            <td>0</td>
+            <td>99</td>
+            <td class="trend-flat">-</td>
+        </tr><tr data-province="江苏" data-city="苏州太仓-江苏">
+            <td>2026-06-10</td>
+            <td>江苏</td>
+            <td>苏州太仓-江苏</td>
+            <td>苏州太仓</td>
+            <td>直营</td>
+            <td>0</td>
+            <td>1</td>
+            <td class="trend-flat">-</td>
+        </tr><tr data-province="江苏" data-city="苏州昆山-江苏">
+            <td>2026-06-10</td>
+            <td>江苏</td>
+            <td>苏州昆山-江苏</td>
+            <td>苏州昆山</td>
+            <td>直营</td>
+            <td>0</td>
+            <td>4</td>
+            <td class="trend-flat">-</td>
+        </tr><tr data-province="浙江" data-city="宁波快递网点-浙江">
+            <td>2026-06-10</td>
+            <td>浙江</td>
+            <td>宁波快递网点-浙江</td>
+            <td>宁波快递网点</td>
+            <td>直营</td>
+            <td>0</td>
+            <td>4</td>
+            <td class="trend-flat">-</td>
+        </tr><tr data-province="甘肃" data-city="兰州-甘肃">
+            <td>2026-06-10</td>
+            <td>甘肃</td>
+            <td>兰州-甘肃</td>
+            <td>兰州</td>
+            <td>代理商</td>
+            <td>0</td>
+            <td>6</td>
+            <td class="trend-flat">-</td>
+        </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2 id="cityTrendTitle">📉 城市趋势</h2>
+        <div id="cityTrendHint" class="trend-hint">👆 请在上方选择具体城市，查看该城市的历史趋势</div>
+        <div id="cityTrendChart" class="chart-container hidden"></div>
+    </div>
+
+    <div class="section">
+        <h2>🗺️ 全国城市分布</h2>
+        <div id="chinaMapChart" class="chart-container map"></div>
+    </div>
+
+    <div class="footer">
+        蛮牛经营日报自动化系统 | 生成时间：2026-06-11 16:00:01
+    </div>
+
+    <script>
+        // === 登录认证 ===
+        const AUTH_USER = 'manniu';
+        const AUTH_HASH = '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92'; // sha256('123456')
+
+        async function sha256(text) {
+            const buf = new TextEncoder().encode(text);
+            const hash = await crypto.subtle.digest('SHA-256', buf);
+            return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        async function doLogin() {
+            const user = document.getElementById('loginUser').value.trim();
+            const pass = document.getElementById('loginPass').value;
+            const err = document.getElementById('loginError');
+
+            if (!user || !pass) {
+                err.style.display = 'block';
+                err.textContent = '请输入用户名和密码';
+                return;
+            }
+
+            const hash = await sha256(pass);
+            if (user === AUTH_USER && hash === AUTH_HASH) {
+                localStorage.setItem('mn_auth', '1');
+                document.getElementById('loginOverlay').style.display = 'none';
+            } else {
+                err.style.display = 'block';
+                err.textContent = '用户名或密码错误';
+            }
+        }
+
+        // Enter 键登录
+        document.getElementById('loginPass').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') doLogin();
+        });
+
+        // 页面加载时检查登录状态
+        if (localStorage.getItem('mn_auth') === '1') {
+            document.getElementById('loginOverlay').style.display = 'none';
+        }
+
+        // === 看板主体 ===
+        const totalTrendData = {"dates": ["2026-06-09", "2026-06-10"], "users": [42100, 42080], "batteries": [92074, 92088]};
+        const cityData = [{"date": "2026-06-10", "province": "上海", "city": "上海", "region": "上海", "model": "直营", "users": 8263, "batteries": 18915, "user_change": -12}, {"date": "2026-06-10", "province": "上海", "city": "上海快递站点", "region": "上海快递站点", "model": "直营", "users": 86, "batteries": 182, "user_change": 0}, {"date": "2026-06-10", "province": "云南", "city": "丽江-云南", "region": "丽江", "model": "西南", "users": 311, "batteries": 544, "user_change": -1}, {"date": "2026-06-10", "province": "云南", "city": "楚雄-云南", "region": "楚雄", "model": "西南", "users": 1, "batteries": 166, "user_change": 0}, {"date": "2026-06-10", "province": "云南", "city": "芒市-云南", "region": "芒市", "model": "西南", "users": 0, "batteries": 4, "user_change": 0}, {"date": "2026-06-10", "province": "内蒙古", "city": "包头-内蒙古", "region": "包头", "model": "代理商", "users": 210, "batteries": 449, "user_change": 5}, {"date": "2026-06-10", "province": "内蒙古", "city": "呼和浩特2-内蒙古", "region": "呼和浩特2", "model": "代理商", "users": 140, "batteries": 200, "user_change": 6}, {"date": "2026-06-10", "province": "四川", "city": "四川内江-四川", "region": "四川内江", "model": "西南", "users": 239, "batteries": 494, "user_change": 1}, {"date": "2026-06-10", "province": "四川", "city": "四川广元-四川", "region": "四川广元", "model": "西南", "users": 133, "batteries": 328, "user_change": 3}, {"date": "2026-06-10", "province": "四川", "city": "四川广安-四川", "region": "四川广安", "model": "西南", "users": 178, "batteries": 451, "user_change": -3}, {"date": "2026-06-10", "province": "四川", "city": "四川达州-四川", "region": "四川达州", "model": "西南", "users": 248, "batteries": 433, "user_change": 2}, {"date": "2026-06-10", "province": "四川", "city": "简阳-四川", "region": "简阳", "model": "西南", "users": 131, "batteries": 208, "user_change": 0}, {"date": "2026-06-10", "province": "四川", "city": "西昌-四川", "region": "西昌", "model": "西南", "users": 489, "batteries": 891, "user_change": -13}, {"date": "2026-06-10", "province": "天津", "city": "天津", "region": "天津", "model": "分公司", "users": 3834, "batteries": 8173, "user_change": 6}, {"date": "2026-06-10", "province": "安徽", "city": "宣城-安徽", "region": "宣城", "model": "合资公司", "users": 278, "batteries": 577, "user_change": 3}, {"date": "2026-06-10", "province": "安徽", "city": "阜阳-安徽", "region": "阜阳", "model": "合资公司", "users": 125, "batteries": 392, "user_change": 1}, {"date": "2026-06-10", "province": "安徽", "city": "芜湖-安徽", "region": "芜湖", "model": "直营", "users": 1808, "batteries": 2983, "user_change": -18}, {"date": "2026-06-10", "province": "安徽", "city": "铜陵-安徽", "region": "铜陵", "model": "直营", "users": 436, "batteries": 773, "user_change": -1}, {"date": "2026-06-10", "province": "安徽", "city": "马鞍山-安徽", "region": "马鞍山", "model": "直营", "users": 512, "batteries": 778, "user_change": 8}, {"date": "2026-06-10", "province": "山东", "city": "日照-山东", "region": "日照", "model": "代理商", "users": 81, "batteries": 361, "user_change": 1}, {"date": "2026-06-10", "province": "山东", "city": "济南-山东", "region": "济南", "model": "直营", "users": 1, "batteries": 297, "user_change": -1}, {"date": "2026-06-10", "province": "山东", "city": "青岛-山东", "region": "青岛", "model": "直营", "users": 2566, "batteries": 5418, "user_change": -15}, {"date": "2026-06-10", "province": "山东", "city": "山东淄博-山东", "region": "山东淄博", "model": "西南", "users": 551, "batteries": 994, "user_change": 6}, {"date": "2026-06-10", "province": "山东", "city": "滨州-山东", "region": "滨州", "model": "西南", "users": 11, "batteries": 186, "user_change": 0}, {"date": "2026-06-10", "province": "山西", "city": "朔州-山西", "region": "朔州", "model": "代理商", "users": 2, "batteries": 259, "user_change": 1}, {"date": "2026-06-10", "province": "山西", "city": "吕梁市岚县-山西", "region": "吕梁市岚县", "model": "直营", "users": 20, "batteries": 41, "user_change": 0}, {"date": "2026-06-10", "province": "山西", "city": "太原-山西", "region": "太原", "model": "直营", "users": 143, "batteries": 469, "user_change": -3}, {"date": "2026-06-10", "province": "广东", "city": "广东韶清-广东", "region": "广东韶清", "model": "直营", "users": 0, "batteries": 4, "user_change": 0}, {"date": "2026-06-10", "province": "广东", "city": "深圳-广东", "region": "深圳", "model": "直营", "users": 1202, "batteries": 2383, "user_change": -1}, {"date": "2026-06-10", "province": "广西", "city": "广西北海-广西", "region": "广西北海", "model": "合资公司", "users": 59, "batteries": 295, "user_change": 4}, {"date": "2026-06-10", "province": "新疆", "city": "乌鲁木齐-新疆", "region": "乌鲁木齐", "model": "代理商", "users": 1864, "batteries": 4465, "user_change": 19}, {"date": "2026-06-10", "province": "新疆", "city": "新疆启航代理商-新疆", "region": "新疆启航代理商", "model": "代理商", "users": 1241, "batteries": 2522, "user_change": 12}, {"date": "2026-06-10", "province": "江苏", "city": "常熟-江苏", "region": "常熟", "model": "代理商", "users": 0, "batteries": 99, "user_change": 0}, {"date": "2026-06-10", "province": "江苏", "city": "无锡-江苏", "region": "无锡", "model": "代理商", "users": 253, "batteries": 1227, "user_change": 3}, {"date": "2026-06-10", "province": "江苏", "city": "南京-江苏", "region": "南京", "model": "直营", "users": 3612, "batteries": 6558, "user_change": -21}, {"date": "2026-06-10", "province": "江苏", "city": "南通-江苏", "region": "南通", "model": "直营", "users": 339, "batteries": 664, "user_change": 4}, {"date": "2026-06-10", "province": "江苏", "city": "宜兴-江苏", "region": "宜兴", "model": "直营", "users": 23, "batteries": 73, "user_change": 0}, {"date": "2026-06-10", "province": "江苏", "city": "常州-江苏", "region": "常州", "model": "直营", "users": 301, "batteries": 642, "user_change": -3}, {"date": "2026-06-10", "province": "江苏", "city": "张家港-江苏", "region": "张家港", "model": "直营", "users": 51, "batteries": 101, "user_change": -4}, {"date": "2026-06-10", "province": "江苏", "city": "江阴-江苏", "region": "江阴", "model": "直营", "users": 43, "batteries": 92, "user_change": -2}, {"date": "2026-06-10", "province": "江苏", "city": "溧阳-江苏", "region": "溧阳", "model": "直营", "users": 35, "batteries": 94, "user_change": 1}, {"date": "2026-06-10", "province": "江苏", "city": "盐城-江苏", "region": "盐城", "model": "直营", "users": 815, "batteries": 1277, "user_change": -5}, {"date": "2026-06-10", "province": "江苏", "city": "苏州太仓-江苏", "region": "苏州太仓", "model": "直营", "users": 0, "batteries": 1, "user_change": 0}, {"date": "2026-06-10", "province": "江苏", "city": "苏州市区-江苏", "region": "苏州市区", "model": "直营", "users": 481, "batteries": 1023, "user_change": -8}, {"date": "2026-06-10", "province": "江苏", "city": "苏州昆山-江苏", "region": "苏州昆山", "model": "直营", "users": 0, "batteries": 4, "user_change": 0}, {"date": "2026-06-10", "province": "江西", "city": "宁都县-江西", "region": "宁都县", "model": "代理商", "users": 15, "batteries": 40, "user_change": 1}, {"date": "2026-06-10", "province": "河北", "city": "唐山-河北", "region": "唐山", "model": "代理商", "users": 258, "batteries": 685, "user_change": 0}, {"date": "2026-06-10", "province": "河南", "city": "信阳-河南", "region": "信阳", "model": "直营", "users": 31, "batteries": 248, "user_change": -5}, {"date": "2026-06-10", "province": "河南", "city": "南阳-河南", "region": "南阳", "model": "直营", "users": 1, "batteries": 33, "user_change": -1}, {"date": "2026-06-10", "province": "河南", "city": "驻马店-河南", "region": "驻马店", "model": "直营", "users": 1, "batteries": 18, "user_change": 0}, {"date": "2026-06-10", "province": "浙江", "city": "舟山-浙江", "region": "舟山", "model": "代理商", "users": 12, "batteries": 126, "user_change": -1}, {"date": "2026-06-10", "province": "浙江", "city": "丽水-浙江", "region": "丽水", "model": "直营", "users": 76, "batteries": 145, "user_change": 2}, {"date": "2026-06-10", "province": "浙江", "city": "台州-浙江", "region": "台州", "model": "直营", "users": 1388, "batteries": 2592, "user_change": 8}, {"date": "2026-06-10", "province": "浙江", "city": "台州快递网点-浙江", "region": "台州快递网点", "model": "直营", "users": 83, "batteries": 156, "user_change": -4}, {"date": "2026-06-10", "province": "浙江", "city": "嘉兴-浙江", "region": "嘉兴", "model": "直营", "users": 118, "batteries": 306, "user_change": 4}, {"date": "2026-06-10", "province": "浙江", "city": "宁波-浙江", "region": "宁波", "model": "直营", "users": 4822, "batteries": 9703, "user_change": -11}, {"date": "2026-06-10", "province": "浙江", "city": "宁波快递网点-浙江", "region": "宁波快递网点", "model": "直营", "users": 0, "batteries": 4, "user_change": 0}, {"date": "2026-06-10", "province": "浙江", "city": "温州-浙江", "region": "温州", "model": "直营", "users": 1568, "batteries": 3101, "user_change": 1}, {"date": "2026-06-10", "province": "浙江", "city": "绍兴-浙江", "region": "绍兴", "model": "直营", "users": 371, "batteries": 728, "user_change": -7}, {"date": "2026-06-10", "province": "浙江", "city": "衢州-浙江", "region": "衢州", "model": "直营", "users": 124, "batteries": 319, "user_change": -2}, {"date": "2026-06-10", "province": "浙江", "city": "金华市-浙江", "region": "金华市", "model": "直营", "users": 744, "batteries": 1662, "user_change": 1}, {"date": "2026-06-10", "province": "海南", "city": "三亚-海南", "region": "三亚", "model": "代理商", "users": 77, "batteries": 273, "user_change": 4}, {"date": "2026-06-10", "province": "甘肃", "city": "兰州-甘肃", "region": "兰州", "model": "代理商", "users": 0, "batteries": 6, "user_change": 0}, {"date": "2026-06-10", "province": "甘肃", "city": "定西市-甘肃", "region": "定西市", "model": "代理商", "users": 107, "batteries": 139, "user_change": -4}, {"date": "2026-06-10", "province": "福建", "city": "厦门-福建", "region": "厦门", "model": "西南", "users": 191, "batteries": 1015, "user_change": 2}, {"date": "2026-06-10", "province": "福建", "city": "福州-福建", "region": "福州", "model": "西南", "users": 312, "batteries": 2399, "user_change": 7}, {"date": "2026-06-10", "province": "福建", "city": "福建南安-福建", "region": "福建南安", "model": "西南", "users": 97, "batteries": 310, "user_change": 0}, {"date": "2026-06-10", "province": "贵州", "city": "铜仁-贵州", "region": "铜仁", "model": "代理商", "users": 91, "batteries": 234, "user_change": 3}, {"date": "2026-06-10", "province": "陕西", "city": "西安-陕西", "region": "西安", "model": "代理商", "users": 477, "batteries": 1356, "user_change": 7}];
+        const cityTrendData = {"三亚-海南": {"dates": ["2026-06-09", "2026-06-10"], "users": [73, 77], "batteries": [273, 273]}, "上海": {"dates": ["2026-06-09", "2026-06-10"], "users": [8275, 8263], "batteries": [18951, 18915]}, "上海快递站点": {"dates": ["2026-06-09", "2026-06-10"], "users": [86, 86], "batteries": [181, 182]}, "丽水-浙江": {"dates": ["2026-06-09", "2026-06-10"], "users": [74, 76], "batteries": [145, 145]}, "丽江-云南": {"dates": ["2026-06-09", "2026-06-10"], "users": [312, 311], "batteries": [544, 544]}, "乌鲁木齐-新疆": {"dates": ["2026-06-09", "2026-06-10"], "users": [1845, 1864], "batteries": [4465, 4465]}, "信阳-河南": {"dates": ["2026-06-09", "2026-06-10"], "users": [36, 31], "batteries": [248, 248]}, "兰州-甘肃": {"dates": ["2026-06-09", "2026-06-10"], "users": [0, 0], "batteries": [6, 6]}, "包头-内蒙古": {"dates": ["2026-06-09", "2026-06-10"], "users": [205, 210], "batteries": [449, 449]}, "南京-江苏": {"dates": ["2026-06-09", "2026-06-10"], "users": [3633, 3612], "batteries": [6558, 6558]}, "南通-江苏": {"dates": ["2026-06-09", "2026-06-10"], "users": [335, 339], "batteries": [694, 664]}, "南阳-河南": {"dates": ["2026-06-09", "2026-06-10"], "users": [2, 1], "batteries": [33, 33]}, "厦门-福建": {"dates": ["2026-06-09", "2026-06-10"], "users": [189, 191], "batteries": [1015, 1015]}, "台州-浙江": {"dates": ["2026-06-09", "2026-06-10"], "users": [1380, 1388], "batteries": [2588, 2592]}, "台州快递网点-浙江": {"dates": ["2026-06-09", "2026-06-10"], "users": [87, 83], "batteries": [160, 156]}, "吕梁市岚县-山西": {"dates": ["2026-06-09", "2026-06-10"], "users": [20, 20], "batteries": [41, 41]}, "呼和浩特2-内蒙古": {"dates": ["2026-06-09", "2026-06-10"], "users": [134, 140], "batteries": [200, 200]}, "唐山-河北": {"dates": ["2026-06-09", "2026-06-10"], "users": [258, 258], "batteries": [685, 685]}, "嘉兴-浙江": {"dates": ["2026-06-09", "2026-06-10"], "users": [114, 118], "batteries": [261, 306]}, "四川内江-四川": {"dates": ["2026-06-09", "2026-06-10"], "users": [238, 239], "batteries": [494, 494]}, "四川广元-四川": {"dates": ["2026-06-09", "2026-06-10"], "users": [130, 133], "batteries": [328, 328]}, "四川广安-四川": {"dates": ["2026-06-09", "2026-06-10"], "users": [181, 178], "batteries": [451, 451]}, "四川达州-四川": {"dates": ["2026-06-09", "2026-06-10"], "users": [246, 248], "batteries": [433, 433]}, "天津": {"dates": ["2026-06-09", "2026-06-10"], "users": [3828, 3834], "batteries": [8204, 8173]}, "太原-山西": {"dates": ["2026-06-09", "2026-06-10"], "users": [146, 143], "batteries": [469, 469]}, "宁波-浙江": {"dates": ["2026-06-09", "2026-06-10"], "users": [4833, 4822], "batteries": [9703, 9703]}, "宁波快递网点-浙江": {"dates": ["2026-06-09", "2026-06-10"], "users": [0, 0], "batteries": [4, 4]}, "宁都县-江西": {"dates": ["2026-06-09", "2026-06-10"], "users": [14, 15], "batteries": [40, 40]}, "定西市-甘肃": {"dates": ["2026-06-09", "2026-06-10"], "users": [111, 107], "batteries": [139, 139]}, "宜兴-江苏": {"dates": ["2026-06-09", "2026-06-10"], "users": [23, 23], "batteries": [73, 73]}, "宣城-安徽": {"dates": ["2026-06-09", "2026-06-10"], "users": [275, 278], "batteries": [577, 577]}, "山东淄博-山东": {"dates": ["2026-06-09", "2026-06-10"], "users": [545, 551], "batteries": [994, 994]}, "常州-江苏": {"dates": ["2026-06-09", "2026-06-10"], "users": [304, 301], "batteries": [641, 642]}, "常熟-江苏": {"dates": ["2026-06-09", "2026-06-10"], "users": [0, 0], "batteries": [99, 99]}, "广东韶清-广东": {"dates": ["2026-06-09", "2026-06-10"], "users": [0, 0], "batteries": [4, 4]}, "广西北海-广西": {"dates": ["2026-06-09", "2026-06-10"], "users": [55, 59], "batteries": [295, 295]}, "张家港-江苏": {"dates": ["2026-06-09", "2026-06-10"], "users": [55, 51], "batteries": [101, 101]}, "新疆启航代理商-新疆": {"dates": ["2026-06-09", "2026-06-10"], "users": [1229, 1241], "batteries": [2522, 2522]}, "无锡-江苏": {"dates": ["2026-06-09", "2026-06-10"], "users": [250, 253], "batteries": [1227, 1227]}, "日照-山东": {"dates": ["2026-06-09", "2026-06-10"], "users": [80, 81], "batteries": [361, 361]}, "朔州-山西": {"dates": ["2026-06-09", "2026-06-10"], "users": [1, 2], "batteries": [259, 259]}, "楚雄-云南": {"dates": ["2026-06-09", "2026-06-10"], "users": [1, 1], "batteries": [166, 166]}, "江阴-江苏": {"dates": ["2026-06-09", "2026-06-10"], "users": [45, 43], "batteries": [92, 92]}, "济南-山东": {"dates": ["2026-06-09", "2026-06-10"], "users": [2, 1], "batteries": [300, 297]}, "深圳-广东": {"dates": ["2026-06-09", "2026-06-10"], "users": [1203, 1202], "batteries": [2383, 2383]}, "温州-浙江": {"dates": ["2026-06-09", "2026-06-10"], "users": [1567, 1568], "batteries": [3102, 3101]}, "溧阳-江苏": {"dates": ["2026-06-09", "2026-06-10"], "users": [34, 35], "batteries": [95, 94]}, "滨州-山东": {"dates": ["2026-06-09", "2026-06-10"], "users": [11, 11], "batteries": [186, 186]}, "盐城-江苏": {"dates": ["2026-06-09", "2026-06-10"], "users": [820, 815], "batteries": [1317, 1277]}, "福州-福建": {"dates": ["2026-06-09", "2026-06-10"], "users": [305, 312], "batteries": [2243, 2399]}, "福建南安-福建": {"dates": ["2026-06-09", "2026-06-10"], "users": [97, 97], "batteries": [310, 310]}, "简阳-四川": {"dates": ["2026-06-09", "2026-06-10"], "users": [131, 131], "batteries": [208, 208]}, "绍兴-浙江": {"dates": ["2026-06-09", "2026-06-10"], "users": [378, 371], "batteries": [728, 728]}, "舟山-浙江": {"dates": ["2026-06-09", "2026-06-10"], "users": [13, 12], "batteries": [126, 126]}, "芒市-云南": {"dates": ["2026-06-09", "2026-06-10"], "users": [0, 0], "batteries": [4, 4]}, "芜湖-安徽": {"dates": ["2026-06-09", "2026-06-10"], "users": [1826, 1808], "batteries": [2983, 2983]}, "苏州太仓-江苏": {"dates": ["2026-06-09", "2026-06-10"], "users": [0, 0], "batteries": [1, 1]}, "苏州市区-江苏": {"dates": ["2026-06-09", "2026-06-10"], "users": [489, 481], "batteries": [1023, 1023]}, "苏州昆山-江苏": {"dates": ["2026-06-09", "2026-06-10"], "users": [0, 0], "batteries": [4, 4]}, "衢州-浙江": {"dates": ["2026-06-09", "2026-06-10"], "users": [126, 124], "batteries": [318, 319]}, "西安-陕西": {"dates": ["2026-06-09", "2026-06-10"], "users": [470, 477], "batteries": [1356, 1356]}, "西昌-四川": {"dates": ["2026-06-09", "2026-06-10"], "users": [502, 489], "batteries": [891, 891]}, "金华市-浙江": {"dates": ["2026-06-09", "2026-06-10"], "users": [743, 744], "batteries": [1663, 1662]}, "铜仁-贵州": {"dates": ["2026-06-09", "2026-06-10"], "users": [88, 91], "batteries": [234, 234]}, "铜陵-安徽": {"dates": ["2026-06-09", "2026-06-10"], "users": [437, 436], "batteries": [773, 773]}, "阜阳-安徽": {"dates": ["2026-06-09", "2026-06-10"], "users": [124, 125], "batteries": [392, 392]}, "青岛-山东": {"dates": ["2026-06-09", "2026-06-10"], "users": [2581, 2566], "batteries": [5465, 5418]}, "马鞍山-安徽": {"dates": ["2026-06-09", "2026-06-10"], "users": [504, 512], "batteries": [778, 778]}, "驻马店-河南": {"dates": ["2026-06-09", "2026-06-10"], "users": [1, 1], "batteries": [18, 18]}};
+        const provinceCityMap = {"上海": ["上海", "上海快递站点"], "云南": ["丽江-云南", "楚雄-云南", "芒市-云南"], "内蒙古": ["包头-内蒙古", "呼和浩特2-内蒙古"], "四川": ["四川内江-四川", "四川广元-四川", "四川广安-四川", "四川达州-四川", "简阳-四川", "西昌-四川"], "天津": ["天津"], "安徽": ["宣城-安徽", "芜湖-安徽", "铜陵-安徽", "阜阳-安徽", "马鞍山-安徽"], "山东": ["山东淄博-山东", "日照-山东", "济南-山东", "滨州-山东", "青岛-山东"], "山西": ["吕梁市岚县-山西", "太原-山西", "朔州-山西"], "广东": ["广东韶清-广东", "深圳-广东"], "广西": ["广西北海-广西"], "新疆": ["乌鲁木齐-新疆", "新疆启航代理商-新疆"], "江苏": ["南京-江苏", "南通-江苏", "宜兴-江苏", "常州-江苏", "常熟-江苏", "张家港-江苏", "无锡-江苏", "江阴-江苏", "溧阳-江苏", "盐城-江苏", "苏州太仓-江苏", "苏州市区-江苏", "苏州昆山-江苏"], "江西": ["宁都县-江西"], "河北": ["唐山-河北"], "河南": ["信阳-河南", "南阳-河南", "驻马店-河南"], "浙江": ["丽水-浙江", "台州-浙江", "台州快递网点-浙江", "嘉兴-浙江", "宁波-浙江", "宁波快递网点-浙江", "温州-浙江", "绍兴-浙江", "舟山-浙江", "衢州-浙江", "金华市-浙江"], "海南": ["三亚-海南"], "甘肃": ["兰州-甘肃", "定西市-甘肃"], "福建": ["厦门-福建", "福州-福建", "福建南安-福建"], "贵州": ["铜仁-贵州"], "陕西": ["西安-陕西"]};
+        const mapData = [{"name": "三亚-海南", "province": "海南", "value": [109.5082, 18.2479, 77, 273]}, {"name": "上海", "province": "上海", "value": [121.4737, 31.2304, 8263, 18915]}, {"name": "上海快递站点", "province": "上海", "value": [121.4737, 31.2304, 86, 182]}, {"name": "丽水-浙江", "province": "浙江", "value": [119.9228, 28.4676, 76, 145]}, {"name": "丽江-云南", "province": "云南", "value": [100.2271, 26.8565, 311, 544]}, {"name": "乌鲁木齐-新疆", "province": "新疆", "value": [87.6168, 43.8256, 1864, 4465]}, {"name": "信阳-河南", "province": "河南", "value": [114.0913, 32.147, 31, 248]}, {"name": "兰州-甘肃", "province": "甘肃", "value": [103.8343, 36.0611, 0, 6]}, {"name": "包头-内蒙古", "province": "内蒙古", "value": [109.8404, 40.6574, 210, 449]}, {"name": "南京-江苏", "province": "江苏", "value": [118.7969, 32.0603, 3612, 6558]}, {"name": "南通-江苏", "province": "江苏", "value": [120.8943, 31.9802, 339, 664]}, {"name": "南阳-河南", "province": "河南", "value": [112.5283, 32.9908, 1, 33]}, {"name": "厦门-福建", "province": "福建", "value": [118.0894, 24.4798, 191, 1015]}, {"name": "台州-浙江", "province": "浙江", "value": [121.421, 28.6564, 1388, 2592]}, {"name": "台州快递网点-浙江", "province": "浙江", "value": [121.421, 28.6564, 83, 156]}, {"name": "吕梁市岚县-山西", "province": "山西", "value": [112.5624, 37.8735, 20, 41]}, {"name": "呼和浩特2-内蒙古", "province": "内蒙古", "value": [111.7492, 40.8426, 140, 200]}, {"name": "唐山-河北", "province": "河北", "value": [118.1802, 39.6305, 258, 685]}, {"name": "嘉兴-浙江", "province": "浙江", "value": [120.7555, 30.746, 118, 306]}, {"name": "四川内江-四川", "province": "四川", "value": [105.0661, 29.5871, 239, 494]}, {"name": "四川广元-四川", "province": "四川", "value": [105.8297, 32.4338, 133, 328]}, {"name": "四川广安-四川", "province": "四川", "value": [106.6334, 30.4563, 178, 451]}, {"name": "四川达州-四川", "province": "四川", "value": [107.5023, 31.2093, 248, 433]}, {"name": "天津", "province": "天津", "value": [117.2008, 39.0842, 3834, 8173]}, {"name": "太原-山西", "province": "山西", "value": [112.5489, 37.8706, 143, 469]}, {"name": "宁波-浙江", "province": "浙江", "value": [121.55, 29.875, 4822, 9703]}, {"name": "宁波快递网点-浙江", "province": "浙江", "value": [121.55, 29.875, 0, 4]}, {"name": "宁都县-江西", "province": "江西", "value": [116.02, 26.47, 15, 40]}, {"name": "定西市-甘肃", "province": "甘肃", "value": [103.8263, 36.0594, 107, 139]}, {"name": "宜兴-江苏", "province": "江苏", "value": [119.8234, 31.364, 23, 73]}, {"name": "宣城-安徽", "province": "安徽", "value": [118.7587, 30.9407, 278, 577]}, {"name": "山东淄博-山东", "province": "山东", "value": [118.0548, 36.8135, 551, 994]}, {"name": "常州-江苏", "province": "江苏", "value": [119.9741, 31.8112, 301, 642]}, {"name": "常熟-江苏", "province": "江苏", "value": [120.7523, 31.6538, 0, 99]}, {"name": "广东韶清-广东", "province": "广东", "value": [113.6, 24.81, 0, 4]}, {"name": "广西北海-广西", "province": "广西", "value": [109.1202, 21.4813, 59, 295]}, {"name": "张家港-江苏", "province": "江苏", "value": [120.5558, 31.8753, 51, 101]}, {"name": "无锡-江苏", "province": "江苏", "value": [120.3119, 31.4912, 253, 1227]}, {"name": "日照-山东", "province": "山东", "value": [119.5269, 35.4164, 81, 361]}, {"name": "朔州-山西", "province": "山西", "value": [112.4312, 39.3316, 2, 259]}, {"name": "楚雄-云南", "province": "云南", "value": [101.55, 25.04, 1, 166]}, {"name": "江阴-江苏", "province": "江苏", "value": [120.2854, 31.9118, 43, 92]}, {"name": "济南-山东", "province": "山东", "value": [117.0009, 36.6758, 1, 297]}, {"name": "深圳-广东", "province": "广东", "value": [114.0579, 22.5431, 1202, 2383]}, {"name": "温州-浙江", "province": "浙江", "value": [120.65, 28.0, 1568, 3101]}, {"name": "溧阳-江苏", "province": "江苏", "value": [119.4842, 31.4169, 35, 94]}, {"name": "滨州-山东", "province": "山东", "value": [117.9707, 37.3819, 11, 186]}, {"name": "盐城-江苏", "province": "江苏", "value": [120.1616, 33.3776, 815, 1277]}, {"name": "福州-福建", "province": "福建", "value": [119.2965, 26.0745, 312, 2399]}, {"name": "福建南安-福建", "province": "福建", "value": [118.54, 24.96, 97, 310]}, {"name": "简阳-四川", "province": "四川", "value": [104.55, 30.41, 131, 208]}, {"name": "绍兴-浙江", "province": "浙江", "value": [120.5802, 30.0302, 371, 728]}, {"name": "舟山-浙江", "province": "浙江", "value": [122.2072, 29.9853, 12, 126]}, {"name": "芒市-云南", "province": "云南", "value": [98.59, 24.43, 0, 4]}, {"name": "芜湖-安徽", "province": "安徽", "value": [118.3762, 31.3263, 1808, 2983]}, {"name": "苏州太仓-江苏", "province": "江苏", "value": [121.13, 31.46, 0, 1]}, {"name": "苏州市区-江苏", "province": "江苏", "value": [120.5853, 31.2989, 481, 1023]}, {"name": "苏州昆山-江苏", "province": "江苏", "value": [120.95, 31.39, 0, 4]}, {"name": "衢州-浙江", "province": "浙江", "value": [118.8595, 28.97, 124, 319]}, {"name": "西安-陕西", "province": "陕西", "value": [108.9398, 34.3416, 477, 1356]}, {"name": "西昌-四川", "province": "四川", "value": [102.2647, 27.8945, 489, 891]}, {"name": "金华市-浙江", "province": "浙江", "value": [119.6495, 29.0895, 744, 1662]}, {"name": "铜仁-贵州", "province": "贵州", "value": [109.1896, 27.7311, 91, 234]}, {"name": "铜陵-安徽", "province": "安徽", "value": [117.8121, 30.9454, 436, 773]}, {"name": "阜阳-安徽", "province": "安徽", "value": [115.8145, 32.8901, 125, 392]}, {"name": "青岛-山东", "province": "山东", "value": [120.3826, 36.0671, 2566, 5418]}, {"name": "马鞍山-安徽", "province": "安徽", "value": [118.5068, 31.6705, 512, 778]}, {"name": "驻马店-河南", "province": "河南", "value": [114.0223, 33.0115, 1, 18]}];
+        const unmatchedCities = ["新疆启航代理商-新疆"];
+
+        let cityChart = null;
+        let mapChart = null;
+
+        // 1. 总趋势图
+        const totalChart = echarts.init(document.getElementById('totalTrendChart'));
+        totalChart.setOption({
+            tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
+            legend: { data: ['用户数', '电池数'] },
+            grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+            xAxis: { type: 'category', data: totalTrendData.dates },
+            yAxis: [
+                { type: 'value', name: '用户数', position: 'left' },
+                { type: 'value', name: '电池数', position: 'right' }
+            ],
+            series: [
+                {
+                    name: '用户数', type: 'line', data: totalTrendData.users,
+                    smooth: true, areaStyle: { opacity: 0.3 },
+                    itemStyle: { color: '#667eea' }, lineStyle: { width: 3 }
+                },
+                {
+                    name: '电池数', type: 'line', data: totalTrendData.batteries,
+                    smooth: true, yAxisIndex: 1,
+                    itemStyle: { color: '#764ba2' }, lineStyle: { width: 3 }
+                }
+            ]
+        });
+
+        // 2. 省份改变 → 更新城市下拉框 + 表格
+        function onProvinceChange() {
+            const prov = document.getElementById('provinceSelect').value;
+            const citySelect = document.getElementById('citySelect');
+            const tbody = document.getElementById('cityTableBody');
+
+            // 重置城市选择框
+            citySelect.innerHTML = '<option value="">全部城市</option>';
+            if (prov && provinceCityMap[prov]) {
+                provinceCityMap[prov].forEach(city => {
+                    const opt = document.createElement('option');
+                    opt.value = city;
+                    opt.textContent = city;
+                    citySelect.appendChild(opt);
+                });
+                citySelect.disabled = false;
+            } else {
+                citySelect.disabled = true;
+                citySelect.innerHTML = '<option value="">请先选省份</option>';
+            }
+
+            // 筛选表格
+            tbody.innerHTML = '';
+            const filtered = prov ? cityData.filter(r => r.province === prov) : cityData;
+            renderTableRows(filtered);
+
+            // 隐藏趋势图
+            hideCityTrend();
+        }
+
+        // 3. 城市改变 → 筛选表格 + 显示趋势图
+        function onCityChange() {
+            const prov = document.getElementById('provinceSelect').value;
+            const city = document.getElementById('citySelect').value;
+            const tbody = document.getElementById('cityTableBody');
+
+            // 筛选表格：只显示该城市的区域明细
+            tbody.innerHTML = '';
+            let filtered = cityData;
+            if (prov) filtered = filtered.filter(r => r.province === prov);
+            if (city) filtered = filtered.filter(r => r.city === city);
+            renderTableRows(filtered);
+
+            // 显示趋势图
+            if (city && cityTrendData[city]) {
+                showCityTrend(city);
+            } else {
+                hideCityTrend();
+            }
+        }
+
+        // 渲染表格行
+        function renderTableRows(rows) {
+            const tbody = document.getElementById('cityTableBody');
+            if (rows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;padding:30px;">无数据</td></tr>';
+                return;
+            }
+            rows.forEach(row => {
+                const tr = document.createElement('tr');
+                let changeClass = 'trend-flat';
+                let changeText = '-';
+                if (row.user_change > 0) { changeClass = 'trend-up'; changeText = '+' + row.user_change; }
+                else if (row.user_change < 0) { changeClass = 'trend-down'; changeText = row.user_change; }
+                tr.innerHTML = `
+                    <td>${row.date}</td>
+                    <td>${row.province}</td>
+                    <td>${row.city}</td>
+                    <td>${row.region}</td>
+                    <td>${row.model}</td>
+                    <td>${row.users.toLocaleString()}</td>
+                    <td>${row.batteries.toLocaleString()}</td>
+                    <td class="${changeClass}">${changeText}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 显示城市趋势图
+        function showCityTrend(city) {
+            const hint = document.getElementById('cityTrendHint');
+            const chartDiv = document.getElementById('cityTrendChart');
+            const title = document.getElementById('cityTrendTitle');
+
+            hint.style.display = 'none';
+            chartDiv.classList.remove('hidden');
+            title.textContent = '📉 ' + city + ' 历史趋势';
+
+            const data = cityTrendData[city];
+            if (!cityChart) {
+                cityChart = echarts.init(chartDiv);
+            }
+            cityChart.setOption({
+                tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
+                legend: { data: ['用户数', '电池数'] },
+                grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+                xAxis: { type: 'category', data: data.dates },
+                yAxis: [
+                    { type: 'value', name: '用户数', position: 'left' },
+                    { type: 'value', name: '电池数', position: 'right' }
+                ],
+                series: [
+                    {
+                        name: '用户数', type: 'line', data: data.users,
+                        smooth: true, areaStyle: { opacity: 0.3 },
+                        itemStyle: { color: '#667eea' }, lineStyle: { width: 3 }
+                    },
+                    {
+                        name: '电池数', type: 'line', data: data.batteries,
+                        smooth: true, yAxisIndex: 1,
+                        itemStyle: { color: '#764ba2' }, lineStyle: { width: 3 }
+                    }
+                ]
+            }, true);
+        }
+
+        // 隐藏城市趋势图
+        function hideCityTrend() {
+            const hint = document.getElementById('cityTrendHint');
+            const chartDiv = document.getElementById('cityTrendChart');
+            const title = document.getElementById('cityTrendTitle');
+
+            hint.style.display = 'block';
+            chartDiv.classList.add('hidden');
+            title.textContent = '📉 城市趋势';
+            if (cityChart) {
+                cityChart.dispose();
+                cityChart = null;
+            }
+        }
+
+        // 4. 加载中国地图
+        fetch('china.json')
+            .then(r => r.json())
+            .then(geoJson => {
+                echarts.registerMap('china', geoJson);
+                initMap();
+            })
+            .catch(err => {
+                console.error('加载地图失败:', err);
+                document.getElementById('chinaMapChart').innerHTML =
+                    '<div class="trend-hint">地图加载失败，请检查网络或刷新页面</div>';
+            });
+
+        function initMap() {
+            mapChart = echarts.init(document.getElementById('chinaMapChart'));
+
+            const option = {
+                tooltip: {
+                    trigger: 'item',
+                    formatter: function(params) {
+                        if (params.seriesType === 'effectScatter') {
+                            const d = params.data;
+                            return '<b>' + d.name + '</b><br/>'
+                                + '省份: ' + d.province + '<br/>'
+                                + '用户数: ' + d.value[2].toLocaleString() + '<br/>'
+                                + '电池数: ' + d.value[3].toLocaleString();
+                        }
+                        return params.name;
+                    }
+                },
+                legend: {
+                    show: true,
+                    left: 'left',
+                    data: ['用户分布'],
+                    textStyle: { fontSize: 14 }
+                },
+                geo: {
+                    map: 'china',
+                    roam: true,
+                    zoom: 1.2,
+                    label: {
+                        show: true,
+                        fontSize: 10,
+                        color: '#333'
+                    },
+                    itemStyle: {
+                        areaColor: '#e0e6f1',
+                        borderColor: '#999',
+                        borderWidth: 0.5
+                    },
+                    emphasis: {
+                        label: { show: true, fontSize: 12, color: '#000' },
+                        itemStyle: { areaColor: '#c5d3e8' }
+                    }
+                },
+                series: [
+                    {
+                        name: '用户分布',
+                        type: 'effectScatter',
+                        coordinateSystem: 'geo',
+                        data: mapData,
+                        symbolSize: 4,
+                        showEffectOn: 'render',
+                        rippleEffect: {
+                            brushType: 'stroke',
+                            scale: 3
+                        },
+                        label: {
+                            show: false
+                        },
+                        itemStyle: {
+                            color: '#1a5c3a'
+                        },
+                        emphasis: {
+                            scale: true,
+                            label: { show: true, formatter: '{b}', position: 'right', fontSize: 13, fontWeight: 'bold', color: '#333' }
+                        }
+                    }
+                ]
+            };
+
+            mapChart.setOption(option);
+        }
+
+        // 响应式
+        window.addEventListener('resize', () => {
+            totalChart.resize();
+            if (cityChart) cityChart.resize();
+            if (mapChart) mapChart.resize();
+        });
+    </script>
+</body>
+</html>
