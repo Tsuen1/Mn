@@ -938,7 +938,7 @@
     </div>
 
     <div class="footer">
-        蛮牛经营日报自动化系统 | 生成时间：2026-06-12 03:31:05
+        蛮牛经营日报自动化系统 | 生成时间：2026-06-12 10:52:11
     </div>
 
     <script>
@@ -996,14 +996,23 @@
 
         // 1. 总趋势图
         const totalChart = echarts.init(document.getElementById('totalTrendChart'));
+
+        // 计算Y轴最小值（从数据最小值减去一个余量，让趋势波动更明显）
+        const userMin = Math.min(...totalTrendData.users);
+        const userMax = Math.max(...totalTrendData.users);
+        const batteryMin = Math.min(...totalTrendData.batteries);
+        const batteryMax = Math.max(...totalTrendData.batteries);
+        const userYMin = Math.floor(userMin - (userMax - userMin) * 0.15);
+        const batteryYMin = Math.floor(batteryMin - (batteryMax - batteryMin) * 0.15);
+
         totalChart.setOption({
             tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
             legend: { data: ['用户数', '电池数'] },
             grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
             xAxis: { type: 'category', data: totalTrendData.dates },
             yAxis: [
-                { type: 'value', name: '用户数', position: 'left' },
-                { type: 'value', name: '电池数', position: 'right' }
+                { type: 'value', name: '用户数', position: 'left', min: userYMin },
+                { type: 'value', name: '电池数', position: 'right', min: batteryYMin }
             ],
             series: [
                 {
@@ -1108,6 +1117,13 @@
             title.textContent = '📉 ' + city + ' 历史趋势';
 
             const data = cityTrendData[city];
+            const cityUserMin = Math.min(...data.users);
+            const cityUserMax = Math.max(...data.users);
+            const cityBatteryMin = Math.min(...data.batteries);
+            const cityBatteryMax = Math.max(...data.batteries);
+            const cityUserYMin = Math.floor(cityUserMin - (cityUserMax - cityUserMin) * 0.15);
+            const cityBatteryYMin = Math.floor(cityBatteryMin - (cityBatteryMax - cityBatteryMin) * 0.15);
+
             if (!cityChart) {
                 cityChart = echarts.init(chartDiv);
             }
@@ -1117,8 +1133,8 @@
                 grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
                 xAxis: { type: 'category', data: data.dates },
                 yAxis: [
-                    { type: 'value', name: '用户数', position: 'left' },
-                    { type: 'value', name: '电池数', position: 'right' }
+                    { type: 'value', name: '用户数', position: 'left', min: cityUserYMin },
+                    { type: 'value', name: '电池数', position: 'right', min: cityBatteryYMin }
                 ],
                 series: [
                     {
