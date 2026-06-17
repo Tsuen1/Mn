@@ -1082,7 +1082,7 @@
     </div>
 
     <div class="footer">
-        蛮牛经营日报自动化系统 | 生成时间：2026-06-17 17:06:05
+        蛮牛经营日报自动化系统 | 生成时间：2026-06-17 17:15:26
     </div>
 
     <script>
@@ -1369,23 +1369,20 @@
                 series: [
                     {
                         name: '用户分布',
-                        type: 'effectScatter',
+                        type: 'scatter',
                         coordinateSystem: 'geo',
                         data: mapData,
-                        symbolSize: 4,
-                        showEffectOn: 'render',
-                        rippleEffect: {
-                            brushType: 'stroke',
-                            scale: 3
-                        },
+                        symbolSize: 12,
                         label: {
                             show: false
                         },
                         itemStyle: {
-                            color: '#1a5c3a'
+                            color: '#1a5c3a',
+                            borderColor: '#fff',
+                            borderWidth: 1
                         },
                         emphasis: {
-                            scale: true,
+                            scale: 2,
                             label: { show: true, formatter: '{b}', position: 'right', fontSize: 13, fontWeight: 'bold', color: '#333' }
                         }
                     }
@@ -1393,6 +1390,17 @@
             };
 
             mapChart.setOption(option);
+
+            // 监听地图缩放，动态调整点的大小（方便手机/平板触摸）
+            mapChart.on('georoam', function(params) {
+                const zoom = mapChart.getOption().geo[0].zoom;
+                const newSize = Math.max(8, Math.min(40, 12 * zoom / 1.2));
+                mapChart.setOption({
+                    series: [{
+                        symbolSize: newSize
+                    }]
+                });
+            });
         }
 
         // 响应式
