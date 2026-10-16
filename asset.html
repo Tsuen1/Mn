@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>资产台账 · 蛮牛管理平台</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#f5f7fa;color:#333;padding:16px;font-size:13px}
+.hdr{text-align:center;padding:18px 0 14px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;border-radius:12px;margin-bottom:14px}
+.hdr h1{font-size:22px;margin-bottom:4px}
+.hdr .sub{font-size:12px;opacity:.85}
+.nav{text-align:center;margin-bottom:14px}
+.nav a{display:inline-block;margin:0 6px;padding:6px 18px;background:#fff;border-radius:16px;color:#667eea;text-decoration:none;font-size:13px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px}
+.kpi{background:#fff;border-radius:10px;padding:12px 14px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.kpi .v{font-size:20px;font-weight:700;color:#667eea}
+.kpi .v small{font-size:12px;font-weight:400;color:#888}
+.kpi .l{font-size:12px;color:#666;margin-top:2px}
+.sect{background:#fff;border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.sect>h2{font-size:16px;color:#444;margin-bottom:4px;padding-bottom:8px;border-bottom:2px solid #667eea33}
+.sect .note{font-size:12px;color:#999;margin:6px 0 12px}
+.grp{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+.card h3{font-size:13px;color:#555;margin-bottom:6px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:#f0f2f8;color:#667eea;font-weight:600;padding:5px 8px;text-align:left;white-space:nowrap}
+td{padding:4px 8px;border-bottom:1px solid #f0f0f5;white-space:nowrap}
+td.r,th.r{text-align:right}
+tr:hover td{background:#f8f9ff}
+.bar{position:relative;min-width:70px}
+.bar i{display:block;height:10px;border-radius:5px;background:linear-gradient(90deg,#667eea,#a78bfa)}
+.bar b{position:absolute;right:4px;top:-1px;font-size:10px;color:#fff;font-weight:400}
+.ft{font-size:11px;color:#aaa;text-align:center;padding:12px 0 4px;line-height:1.8}
+.tag{display:inline-block;padding:1px 8px;border-radius:8px;font-size:11px;background:#eef0ff;color:#667eea}
+@media(max-width:720px){.grp{grid-template-columns:1fr}}
+
+.login-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);display:flex;align-items:center;justify-content:center;z-index:9999}
+.login-box{background:#fff;padding:40px;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.3);width:360px;text-align:center}
+.login-box h2{font-size:22px;margin-bottom:8px;color:#333}
+.login-box p{font-size:13px;color:#999;margin-bottom:25px}
+.login-box input{width:100%;padding:12px 15px;margin-bottom:12px;border:1px solid #ddd;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box}
+.login-box input:focus{border-color:#667eea}
+.login-box button{width:100%;padding:12px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;border:none;border-radius:8px;font-size:15px;cursor:pointer}
+.login-box button:hover{opacity:.9}
+.login-error{color:#e74c3c;font-size:13px;margin-top:10px;display:none}
+@media(max-width:768px){.login-box{width:90%;padding:30px 20px}}
+</style>
+</head>
+<body>
+<div id="loginOverlay" class="login-overlay" style="display:none">
+  <div class="login-box"><h2>🔐 蛮牛管理平台</h2><p>授权用户专用，请登录</p>
+  <input type="text" id="loginUser" placeholder="用户名" autocomplete="username">
+  <input type="password" id="loginPass" placeholder="密码" autocomplete="current-password">
+  <button onclick="doLogin()">登 录</button>
+  <div class="login-error" id="loginError"></div></div>
+</div>
+
+<script>
+const AUTH_USER='manniu', AUTH_HASH='8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92';
+async function sha256(t){const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return [...new Uint8Array(d)].map(b=>b.toString(16).padStart(2,'0')).join('')}
+async function doLogin(){
+  const u=document.getElementById('loginUser').value.trim(),p=document.getElementById('loginPass').value,err=document.getElementById('loginError');
+  if(!u||!p){err.style.display='block';err.textContent='请输入用户名和密码';return}
+  if(u===AUTH_USER&&(await sha256(p))===AUTH_HASH){localStorage.setItem('mn_auth','1');document.getElementById('loginOverlay').style.display='none'}
+  else{err.style.display='block';err.textContent='用户名或密码错误'}
+}
+window.addEventListener('DOMContentLoaded',()=>{
+  const o=document.getElementById('loginOverlay');
+  if(localStorage.getItem('mn_auth')==='1'){o.style.display='none'}
+  else{o.style.display='flex';
+    document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+    document.getElementById('loginUser').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+  }
+});
+</script>
+<div class="hdr"><h1>蛮牛管理平台 · 资产台账</h1><div class="sub">电池 + 电柜 总台账 · 数据截至 <span id="d"></span></div></div>
+<div class="nav"><a href="/">← 业务看板</a><a href="/finance.html">财务看板</a><a href="/asset.html">资产台账</a><span class="tag">自用 · 经营管理口径</span></div>
+<div class="kpis" id="kpis"></div>
+
+<div class="sect"><h2>一、电池台账</h2><div class="note">口径：业务系统全量（含已退出）。在册 115,835 台 / 已退出 10,813 台；原值、净值为财务账面口径（自有及融资租入）。经营租赁 15,721 台无产权原值，成本体现为租金。</div>
+<div class="grp">
+<div class="card"><h3>按业务类型</h3><div id="t_biz"></div></div>
+<div class="card"><h3>按产权类别</h3><div id="t_own"></div></div>
+<div class="card"><h3>按生命周期（含退出）</h3><div id="t_life"></div></div>
+<div class="card"><h3>在册数据质量</h3><div id="t_qual"></div></div>
+</div>
+<div class="grp" style="margin-top:14px">
+<div class="card"><h3>按型号</h3><div id="t_model"></div></div>
+<div class="card"><h3>按电压规格</h3><div id="t_volt"></div></div>
+</div>
+<div class="grp" style="margin-top:14px">
+<div class="card"><h3>按省</h3><div id="t_prov"></div></div>
+<div class="card"><h3>按城市 top30</h3><div id="t_city"></div></div>
+</div>
+</div>
+
+<div class="sect"><h2>二、电柜台账</h2><div class="note">口径：业务系统全量 6,175 台。原值 5,985.5 万为财务账面锚定。仓数、供应商、投产批次来自业务系统；状态组合 = 机柜状态 × 在线状态；组织性质区分在运营与仓库库存。</div>
+<div class="grp">
+<div class="card"><h3>按仓数档</h3><div id="t_cdoor"></div></div>
+<div class="card"><h3>按供应商</h3><div id="t_csup"></div></div>
+<div class="card"><h3>按投产批次（月）</h3><div id="t_cage"></div></div>
+</div>
+<div class="grp" style="margin-top:14px">
+<div class="card"><h3>按状态 × 归属（禁用率）</h3><div id="t_cstatus"></div></div>
+<div class="card"><h3>按组织性质</h3><div id="t_corg"></div></div>
+<div class="card"><h3>按合同与账单</h3><div id="t_ccontract"></div></div>
+</div>
+<div class="grp" style="margin-top:14px">
+<div class="card"><h3>按省</h3><div id="t_cprov"></div></div>
+<div class="card"><h3>按城市 top25</h3><div id="t_ccity"></div></div>
+</div>
+</div>
+
+<div class="ft">数据来源：业务库 asset.battery_ledger / asset.cabinet_ledger（thinkserver 每日 05:10 刷新）· 财务锚定：T+ 总账<br>
+口径说明：电池原值 23,876.1 万与财务账面精确勾稽；业务已注销丢失、财务未核销 4,931 台（净值 784.5 万）已单列清单；租赁电池按租金核算不占原值；电柜单柜成本无法区分，原值为整池锚定。</div>
+
+<script>
+const D = {"ap_biz": [{"cat": "自有购置", "units": "96809", "orig_wan": "23537.4"}, {"cat": "经营租赁", "units": "15721", "orig_wan": "0.0"}, {"cat": "代管", "units": "1800", "orig_wan": "0.0"}, {"cat": "融资租赁", "units": "1352", "orig_wan": "338.7"}, {"cat": "其他", "units": "153", "orig_wan": "0.0"}], "ap_city": [{"cat": "上海", "units": "24744", "orig_wan": "5533.3", "lease_units": "6"}, {"cat": "宁波", "units": "10427", "orig_wan": "2239.9", "lease_units": "1560"}, {"cat": "南京", "units": "9462", "orig_wan": "2053.2", "lease_units": "1265"}, {"cat": "天津", "units": "6477", "orig_wan": "1626.0", "lease_units": "0"}, {"cat": "青岛", "units": "5126", "orig_wan": "1152.3", "lease_units": "841"}, {"cat": "乌鲁木齐", "units": "3978", "orig_wan": "927.3", "lease_units": "0"}, {"cat": "温州", "units": "3621", "orig_wan": "802.9", "lease_units": "464"}, {"cat": "台州", "units": "3524", "orig_wan": "684.1", "lease_units": "811"}, {"cat": "福州", "units": "3485", "orig_wan": "493.8", "lease_units": "1541"}, {"cat": "芜湖", "units": "3429", "orig_wan": "632.7", "lease_units": "1086"}, {"cat": "深圳", "units": "2467", "orig_wan": "619.5", "lease_units": "12"}, {"cat": "厦门", "units": "1954", "orig_wan": "440.0", "lease_units": "0"}, {"cat": "苏州", "units": "1854", "orig_wan": "475.2", "lease_units": "0"}, {"cat": "金华", "units": "1844", "orig_wan": "396.6", "lease_units": "282"}, {"cat": "烟台", "units": "1778", "orig_wan": "190.5", "lease_units": "0"}, {"cat": "泉州", "units": "1765", "orig_wan": "291.9", "lease_units": "1"}, {"cat": "呼和浩特", "units": "1537", "orig_wan": "83.9", "lease_units": "1224"}, {"cat": "沈阳", "units": "1483", "orig_wan": "401.7", "lease_units": "0"}, {"cat": "南宁", "units": "1467", "orig_wan": "135.7", "lease_units": "956"}, {"cat": "盐城", "units": "1441", "orig_wan": "291.1", "lease_units": "298"}, {"cat": "无锡", "units": "1436", "orig_wan": "317.4", "lease_units": "152"}, {"cat": "西安", "units": "1240", "orig_wan": "314.3", "lease_units": "0"}, {"cat": "日照", "units": "1157", "orig_wan": "245.5", "lease_units": "0"}, {"cat": "北京", "units": "1059", "orig_wan": "11.0", "lease_units": "975"}, {"cat": "长春", "units": "997", "orig_wan": "53.1", "lease_units": "798"}, {"cat": "淄博", "units": "954", "orig_wan": "142.7", "lease_units": "427"}, {"cat": "南通", "units": "946", "orig_wan": "218.5", "lease_units": "84"}, {"cat": "常州", "units": "857", "orig_wan": "155.5", "lease_units": "238"}, {"cat": "昌吉回族自治州", "units": "855", "orig_wan": "207.4", "lease_units": "0"}, {"cat": "铜陵", "units": "766", "orig_wan": "179.0", "lease_units": "105"}], "ap_kpi": [{"total": "126648", "onbook": "115835", "exited": "10813", "orig_wan": "23876.1", "nbv_wan": "15640.3"}], "ap_life": [{"cat": "在用", "units": "110904", "orig_wan": "22678.5"}, {"cat": "已删除-疑真实处置", "units": "6412", "orig_wan": "1244.8"}, {"cat": "已删除-无型号(疑垃圾/测试)", "units": "4401", "orig_wan": "0.0"}, {"cat": "在册-已注销", "units": "2890", "orig_wan": "705.7"}, {"cat": "在册-已丢失", "units": "2041", "orig_wan": "491.9"}], "ap_model": [{"cat": "6551", "units": "31976", "orig_wan": "8137.7", "avg_cost": "2545", "fault_units": "0"}, {"cat": "4856", "units": "10019", "orig_wan": "2337.0", "avg_cost": "2333", "fault_units": "0"}, {"cat": "6556（短）", "units": "9064", "orig_wan": "2455.1", "avg_cost": "2709", "fault_units": "0"}, {"cat": "6556", "units": "9058", "orig_wan": "2419.4", "avg_cost": "2709", "fault_units": "0"}, {"cat": "7258", "units": "8546", "orig_wan": "798.8", "avg_cost": "2666", "fault_units": "0"}, {"cat": "4851", "units": "7249", "orig_wan": "1680.4", "avg_cost": "2318", "fault_units": "0"}, {"cat": "4850-14（长）", "units": "5502", "orig_wan": "1239.0", "avg_cost": "2252", "fault_units": "0"}, {"cat": "6550", "units": "4112", "orig_wan": "1030.8", "avg_cost": "2507", "fault_units": "0"}, {"cat": "6537", "units": "3692", "orig_wan": "965.4", "avg_cost": "2615", "fault_units": "0"}, {"cat": "6445", "units": "3501", "orig_wan": "566.0", "avg_cost": "1617", "fault_units": "0"}, {"cat": "7255", "units": "3494", "orig_wan": "0.2", "avg_cost": "2486", "fault_units": "0"}, {"cat": "4858", "units": "2973", "orig_wan": "669.5", "avg_cost": "2252", "fault_units": "0"}, {"cat": "7240", "units": "2907", "orig_wan": "0.0", "avg_cost": "", "fault_units": "0"}, {"cat": "4830", "units": "2730", "orig_wan": "303.5", "avg_cost": "1361", "fault_units": "0"}, {"cat": "6030(矮)", "units": "1859", "orig_wan": "0.0", "avg_cost": "", "fault_units": "0"}, {"cat": "4848", "units": "1821", "orig_wan": "184.9", "avg_cost": "2252", "fault_units": "0"}, {"cat": "7245", "units": "1623", "orig_wan": "0.0", "avg_cost": "", "fault_units": "0"}, {"cat": "4860", "units": "1611", "orig_wan": "362.8", "avg_cost": "2252", "fault_units": "0"}, {"cat": "4859", "units": "1003", "orig_wan": "225.9", "avg_cost": "2252", "fault_units": "0"}, {"cat": "6065", "units": "998", "orig_wan": "196.0", "avg_cost": "1964", "fault_units": "0"}, {"cat": "6050", "units": "540", "orig_wan": "106.0", "avg_cost": "1964", "fault_units": "0"}, {"cat": "6037", "units": "494", "orig_wan": "96.6", "avg_cost": "1964", "fault_units": "0"}, {"cat": "7250", "units": "304", "orig_wan": "0.0", "avg_cost": "", "fault_units": "0"}, {"cat": "6060", "units": "300", "orig_wan": "0.0", "avg_cost": "", "fault_units": "0"}, {"cat": "4850-14（胖）", "units": "200", "orig_wan": "45.0", "avg_cost": "2252", "fault_units": "0"}, {"cat": "4850", "units": "100", "orig_wan": "22.5", "avg_cost": "2252", "fault_units": "0"}, {"cat": "4845", "units": "100", "orig_wan": "20.2", "avg_cost": "2024", "fault_units": "0"}, {"cat": "4850-13", "units": "37", "orig_wan": "8.3", "avg_cost": "2252", "fault_units": "0"}, {"cat": "4520", "units": "10", "orig_wan": "2.6", "avg_cost": "2601", "fault_units": "0"}, {"cat": "7540", "units": "9", "orig_wan": "1.9", "avg_cost": "2162", "fault_units": "0"}, {"cat": "4824", "units": "2", "orig_wan": "0.5", "avg_cost": "2252", "fault_units": "0"}, {"cat": "6030", "units": "1", "orig_wan": "0.0", "avg_cost": "", "fault_units": "0"}], "ap_own": [{"cat": "自有(含融资租入)", "units": "98161", "orig_wan": "23876.1"}, {"cat": "经营租赁", "units": "15721", "orig_wan": "0.0"}, {"cat": "代管", "units": "1800", "orig_wan": "0.0"}, {"cat": "其他", "units": "153", "orig_wan": "0.0"}], "ap_prov": [{"cat": "上海市", "units": "24744", "orig_wan": "5533.3", "lease_units": "6"}, {"cat": "浙江省", "units": "21140", "orig_wan": "4475.2", "lease_units": "3434"}, {"cat": "江苏省", "units": "16602", "orig_wan": "3646.1", "lease_units": "2037"}, {"cat": "山东省", "units": "9665", "orig_wan": "1757.5", "lease_units": "1484"}, {"cat": "福建省", "units": "7204", "orig_wan": "1225.8", "lease_units": "1542"}, {"cat": "天津市", "units": "6477", "orig_wan": "1626.0", "lease_units": "0"}, {"cat": "新疆维吾尔自治区", "units": "6394", "orig_wan": "1526.7", "lease_units": "0"}, {"cat": "安徽省", "units": "5995", "orig_wan": "1166.0", "lease_units": "1677"}, {"cat": "广东省", "units": "3008", "orig_wan": "755.9", "lease_units": "12"}, {"cat": "内蒙古自治区", "units": "2235", "orig_wan": "205.2", "lease_units": "1474"}, {"cat": "四川省", "units": "2078", "orig_wan": "326.2", "lease_units": "289"}, {"cat": "辽宁省", "units": "2030", "orig_wan": "401.7", "lease_units": "547"}, {"cat": "广西壮族自治区", "units": "1856", "orig_wan": "175.2", "lease_units": "1199"}, {"cat": "陕西省", "units": "1290", "orig_wan": "314.3", "lease_units": "50"}, {"cat": "云南省", "units": "1258", "orig_wan": "251.1", "lease_units": "195"}, {"cat": "北京市", "units": "1059", "orig_wan": "11.0", "lease_units": "975"}, {"cat": "吉林省", "units": "997", "orig_wan": "53.1", "lease_units": "798"}, {"cat": "河南省", "units": "568", "orig_wan": "142.4", "lease_units": "0"}, {"cat": "河北省", "units": "526", "orig_wan": "119.9", "lease_units": "0"}, {"cat": "贵州省", "units": "435", "orig_wan": "94.8", "lease_units": "0"}, {"cat": "甘肃省", "units": "210", "orig_wan": "55.9", "lease_units": "0"}, {"cat": "江西省", "units": "53", "orig_wan": "10.7", "lease_units": "0"}, {"cat": "山西省", "units": "6", "orig_wan": "1.6", "lease_units": "0"}, {"cat": "海南省", "units": "5", "orig_wan": "0.7", "lease_units": "2"}], "ap_quality": [{"cat": "迁移日(不可信)", "units": "61797"}, {"cat": "可用", "units": "53738"}, {"cat": "缺失", "units": "300"}], "ap_volt": [{"cat": "65V/51Ah", "units": "31976", "orig_wan": "8137.7"}, {"cat": "48V/55.6Ah", "units": "10019", "orig_wan": "2337.0"}, {"cat": "65V/56Ah", "units": "9064", "orig_wan": "2455.1"}, {"cat": "65V/55.6Ah", "units": "9058", "orig_wan": "2419.4"}, {"cat": "72V/58Ah", "units": "8546", "orig_wan": "798.8"}, {"cat": "48V/51Ah", "units": "7249", "orig_wan": "1680.4"}, {"cat": "48V/50Ah", "units": "5839", "orig_wan": "1314.9"}, {"cat": "65V/50Ah", "units": "4112", "orig_wan": "1030.8"}, {"cat": "65V/37Ah", "units": "3692", "orig_wan": "965.4"}, {"cat": "64V/45Ah", "units": "3501", "orig_wan": "566.0"}, {"cat": "72V/55Ah", "units": "3494", "orig_wan": "0.2"}, {"cat": "48V/58Ah", "units": "2973", "orig_wan": "669.5"}, {"cat": "72V/40Ah", "units": "2907", "orig_wan": ""}, {"cat": "48V/30Ah", "units": "2730", "orig_wan": "303.5"}, {"cat": "60V/30Ah", "units": "1860", "orig_wan": ""}, {"cat": "48V/48Ah", "units": "1821", "orig_wan": "184.9"}, {"cat": "72V/45Ah", "units": "1623", "orig_wan": ""}, {"cat": "48V/60Ah", "units": "1611", "orig_wan": "362.8"}, {"cat": "48V/59Ah", "units": "1003", "orig_wan": "225.9"}, {"cat": "60V/65Ah", "units": "998", "orig_wan": "196.0"}, {"cat": "60V/50Ah", "units": "540", "orig_wan": "106.0"}, {"cat": "60V/37Ah", "units": "494", "orig_wan": "96.6"}, {"cat": "72V/50Ah", "units": "304", "orig_wan": ""}, {"cat": "60V/60Ah", "units": "300", "orig_wan": ""}, {"cat": "48V/44.5Ah", "units": "100", "orig_wan": "20.2"}, {"cat": "45V/20Ah", "units": "10", "orig_wan": "2.6"}, {"cat": "75V/40Ah", "units": "9", "orig_wan": "1.9"}, {"cat": "48V/24Ah", "units": "2", "orig_wan": "0.5"}], "cb_age": [{"cat": "2024-04", "units": "15"}, {"cat": "2024-05", "units": "370"}, {"cat": "2024-06", "units": "186"}, {"cat": "2024-07", "units": "179"}, {"cat": "2024-08", "units": "39"}, {"cat": "2024-09", "units": "2524"}, {"cat": "2024-10", "units": "126"}, {"cat": "2024-11", "units": "1311"}, {"cat": "2024-12", "units": "206"}, {"cat": "2025-01", "units": "43"}, {"cat": "2025-03", "units": "32"}, {"cat": "2025-04", "units": "153"}, {"cat": "2025-05", "units": "184"}, {"cat": "2025-06", "units": "22"}, {"cat": "2025-07", "units": "61"}, {"cat": "2025-10", "units": "25"}, {"cat": "2025-11", "units": "3"}, {"cat": "2025-12", "units": "36"}, {"cat": "2026-01", "units": "32"}, {"cat": "2026-02", "units": "24"}, {"cat": "2026-03", "units": "69"}, {"cat": "2026-04", "units": "42"}, {"cat": "2026-05", "units": "17"}, {"cat": "2026-06", "units": "49"}, {"cat": "2026-07", "units": "101"}, {"cat": "2026-08", "units": "101"}, {"cat": "2026-09", "units": "202"}, {"cat": "2026-10", "units": "23"}], "cb_city": [{"cat": "上海", "units": "1514", "orig_wan": "1467.5"}, {"cat": "宁波", "units": "533", "orig_wan": "516.6"}, {"cat": "南京", "units": "382", "orig_wan": "370.3"}, {"cat": "福州", "units": "352", "orig_wan": "341.2"}, {"cat": "天津", "units": "349", "orig_wan": "338.3"}, {"cat": "青岛", "units": "286", "orig_wan": "277.2"}, {"cat": "乌鲁木齐", "units": "221", "orig_wan": "214.2"}, {"cat": "温州", "units": "187", "orig_wan": "181.3"}, {"cat": "深圳", "units": "184", "orig_wan": "178.4"}, {"cat": "台州", "units": "154", "orig_wan": "149.3"}, {"cat": "芜湖", "units": "147", "orig_wan": "142.5"}, {"cat": "西安", "units": "135", "orig_wan": "130.9"}, {"cat": "南宁", "units": "131", "orig_wan": "127.0"}, {"cat": "金华", "units": "131", "orig_wan": "127.0"}, {"cat": "苏州", "units": "126", "orig_wan": "122.1"}, {"cat": "泉州", "units": "107", "orig_wan": "103.7"}, {"cat": "厦门", "units": "85", "orig_wan": "82.4"}, {"cat": "无锡", "units": "83", "orig_wan": "80.5"}, {"cat": "呼和浩特", "units": "76", "orig_wan": "73.7"}, {"cat": "常州", "units": "74", "orig_wan": "71.7"}, {"cat": "长春", "units": "70", "orig_wan": "67.9"}, {"cat": "盐城", "units": "64", "orig_wan": "62.0"}, {"cat": "南通", "units": "50", "orig_wan": "48.5"}, {"cat": "淄博", "units": "44", "orig_wan": "42.6"}, {"cat": "绍兴", "units": "41", "orig_wan": "39.7"}], "cb_contract": [{"cat": "有合同号", "units": "4526", "dis_pct": "4.0"}, {"cat": "无合同号", "units": "1649", "dis_pct": "5.3"}], "cb_door": [{"cat": "12仓", "units": "6124", "avg_usable": "11.5", "orig_wan": "5936.1"}, {"cat": "5仓", "units": "28", "avg_usable": "4.9", "orig_wan": "27.1"}, {"cat": "10仓", "units": "19", "avg_usable": "10.0", "orig_wan": "18.4"}, {"cat": "", "units": "4", "avg_usable": "", "orig_wan": "3.9"}], "cb_org": [{"cat": "运营", "units": "5630"}, {"cat": "仓库库存", "units": "514"}, {"cat": "快递大客户项目", "units": "25"}, {"cat": "测试", "units": "4"}, {"cat": "", "units": "2"}], "cb_prov": [{"cat": "上海市", "units": "1514", "orig_wan": "1467.5", "nbv_wan": "857.5"}, {"cat": "浙江省", "units": "1128", "orig_wan": "1093.4", "nbv_wan": "638.9"}, {"cat": "江苏省", "units": "781", "orig_wan": "757.0", "nbv_wan": "442.3"}, {"cat": "福建省", "units": "544", "orig_wan": "527.3", "nbv_wan": "308.1"}, {"cat": "山东省", "units": "386", "orig_wan": "374.2", "nbv_wan": "218.6"}, {"cat": "天津市", "units": "349", "orig_wan": "338.3", "nbv_wan": "197.7"}, {"cat": "新疆维吾尔自治区", "units": "348", "orig_wan": "337.3", "nbv_wan": "197.1"}, {"cat": "安徽省", "units": "260", "orig_wan": "252.0", "nbv_wan": "147.3"}, {"cat": "广东省", "units": "184", "orig_wan": "178.4", "nbv_wan": "104.2"}, {"cat": "广西壮族自治区", "units": "154", "orig_wan": "149.3", "nbv_wan": "87.2"}, {"cat": "陕西省", "units": "136", "orig_wan": "131.8", "nbv_wan": "77.0"}, {"cat": "内蒙古自治区", "units": "108", "orig_wan": "104.7", "nbv_wan": "61.2"}, {"cat": "四川省", "units": "98", "orig_wan": "95.0", "nbv_wan": "55.5"}, {"cat": "吉林省", "units": "70", "orig_wan": "67.9", "nbv_wan": "39.6"}, {"cat": "河北省", "units": "30", "orig_wan": "29.1", "nbv_wan": "17.0"}, {"cat": "海南省", "units": "20", "orig_wan": "19.4", "nbv_wan": "11.3"}, {"cat": "云南省", "units": "20", "orig_wan": "19.4", "nbv_wan": "11.3"}, {"cat": "辽宁省", "units": "16", "orig_wan": "15.5", "nbv_wan": "9.1"}, {"cat": "贵州省", "units": "12", "orig_wan": "11.6", "nbv_wan": "6.8"}, {"cat": "甘肃省", "units": "5", "orig_wan": "4.8", "nbv_wan": "2.8"}, {"cat": "江西省", "units": "4", "orig_wan": "3.9", "nbv_wan": "2.3"}, {"cat": "北京市", "units": "3", "orig_wan": "2.9", "nbv_wan": "1.7"}, {"cat": "河南省", "units": "3", "orig_wan": "2.9", "nbv_wan": "1.7"}, {"cat": "(未知)", "units": "2", "orig_wan": "1.9", "nbv_wan": "1.1"}], "cb_status": [{"cat": "状态0/服0/在线", "org_kind": "运营", "units": "3482", "dis_pct": "4.3"}, {"cat": "状态0/服2/在线", "org_kind": "运营", "units": "1656", "dis_pct": "4.1"}, {"cat": "状态0/服0/离线", "org_kind": "仓库库存", "units": "496", "dis_pct": "5.9"}, {"cat": "状态0/服0/离线", "org_kind": "运营", "units": "312", "dis_pct": "3.2"}, {"cat": "状态0/服2/离线", "org_kind": "运营", "units": "119", "dis_pct": "7.6"}, {"cat": "状态1/服2/在线", "org_kind": "运营", "units": "28", "dis_pct": "1.2"}, {"cat": "状态1/服0/离线", "org_kind": "运营", "units": "16", "dis_pct": "3.6"}, {"cat": "状态0/服0/在线", "org_kind": "快递大客户项目", "units": "13", "dis_pct": "4.5"}, {"cat": "状态1/服0/在线", "org_kind": "运营", "units": "10", "dis_pct": "0.0"}, {"cat": "状态0/服0/在线", "org_kind": "仓库库存", "units": "9", "dis_pct": "5.6"}, {"cat": "状态0/服0/离线", "org_kind": "快递大客户项目", "units": "6", "dis_pct": "1.4"}, {"cat": "状态1/服0/离线", "org_kind": "仓库库存", "units": "6", "dis_pct": "12.5"}], "cb_supplier": [{"cat": "蛮牛", "units": "5815", "orig_wan": "5636.5"}, {"cat": "蛮牛换电", "units": "177", "orig_wan": "171.6"}, {"cat": "(空)", "units": "131", "orig_wan": "127.0"}, {"cat": "星云", "units": "26", "orig_wan": "25.2"}, {"cat": "锐祺", "units": "25", "orig_wan": "24.2"}, {"cat": "测试", "units": "1", "orig_wan": "1.0"}]};
+document.getElementById('d').textContent = new Date().toLocaleDateString('zh-CN');
+const fmt = n => Number(n||0).toLocaleString('zh-CN');
+const wan = n => n===''||n==null ? '—' : fmt(Math.round(Number(n)*10)/10);
+const pct = n => n===''||n==null ? '—' : Number(n).toFixed(1)+'%';
+
+function kpi(l,v,u){return `<div class="kpi"><div class="v">${v}<small>${u||''}</small></div><div class="l">${l}</div></div>`}
+const K = D.ap_kpi[0];
+document.getElementById('kpis').innerHTML =
+  kpi('电池 · 在册', fmt(K.onbook), ' 台') +
+  kpi('电池 · 已退出', fmt(K.exited), ' 台') +
+  kpi('电池原值', wan(K.orig_wan), ' 万') +
+  kpi('电池净值', wan(K.nbv_wan), ' 万') +
+  kpi('电柜总数', '6,175', ' 台') +
+  kpi('12仓电柜占比', '99.2%') +
+  kpi('电柜原值', '5,985.5', ' 万') +
+  kpi('在运营电柜', fmt(5630), ' 台');
+
+function table(el, rows, cols, barKey){
+  const max = barKey ? Math.max(...rows.map(r=>Number(r[barKey]||0)),1) : 0;
+  let h = '<table><thead><tr>' + cols.map(c=>'<th class="'+(c.num?'r':'')+'">'+c.l+'</th>').join('') + (barKey?'<th></th>':'') + '</tr></thead><tbody>';
+  h += rows.map(r=>'<tr>' + cols.map(c=>{
+    let v = r[c.f];
+    if(c.num) v = c.wan ? wan(v) : fmt(v);
+    return '<td class="'+(c.num?'r':'')+'">'+(v===''?'—':v)+'</td>';
+  }).join('') + (barKey?'<td class="bar"><i style="width:'+Math.round(Number(r[barKey]||0)/max*100)+'%"></i><b>'+pct(barKey==='dis_pct'?r[barKey]:(Number(r[barKey]||0)/max*100))+'</b></td>':'') + '</tr>').join('');
+  document.getElementById(el).innerHTML = h + '</tbody></table>';
+}
+
+const C_U=[{f:'cat',l:'类别'},{f:'units',l:'台数',num:1}];
+const C_UW=[{f:'cat',l:'类别'},{f:'units',l:'台数',num:1},{f:'orig_wan',l:'原值(万)',num:1,wan:1}];
+table('t_biz', D.ap_biz, C_UW, 'units');
+table('t_own', D.ap_own, C_UW, 'units');
+table('t_life', D.ap_life, C_UW, 'units');
+table('t_qual', D.ap_quality, C_U, 'units');
+table('t_model', D.ap_model, [{f:'cat',l:'型号'},{f:'units',l:'台数',num:1},{f:'orig_wan',l:'原值(万)',num:1,wan:1},{f:'avg_cost',l:'均价',num:1},{f:'fault_units',l:'故障',num:1}], 'units');
+table('t_volt', D.ap_volt, C_UW, 'units');
+table('t_prov', D.ap_prov, [{f:'cat',l:'省'},{f:'units',l:'台数',num:1},{f:'orig_wan',l:'原值(万)',num:1,wan:1},{f:'lease_units',l:'租赁',num:1}], 'units');
+table('t_city', D.ap_city, [{f:'cat',l:'城市'},{f:'units',l:'台数',num:1},{f:'orig_wan',l:'原值(万)',num:1,wan:1},{f:'lease_units',l:'租赁',num:1}], 'units');
+table('t_cdoor', D.cb_door, [{f:'cat',l:'仓数档'},{f:'units',l:'台数',num:1},{f:'orig_wan',l:'原值(万)',num:1,wan:1}], 'units');
+table('t_csup', D.cb_supplier, [{f:'cat',l:'供应商'},{f:'units',l:'台数',num:1},{f:'orig_wan',l:'原值(万)',num:1,wan:1}], 'units');
+table('t_cage', D.cb_age, [{f:'cat',l:'投产月份'},{f:'units',l:'台数',num:1}], 'units');
+table('t_cstatus', D.cb_status, [{f:'cat',l:'状态/在线'},{f:'org_kind',l:'归属'},{f:'units',l:'台数',num:1},{f:'dis_pct',l:'禁用率%',num:1}], 'dis_pct');
+table('t_corg', D.cb_org, C_U, 'units');
+table('t_ccontract', D.cb_contract, [{f:'cat',l:'类别'},{f:'units',l:'台数',num:1},{f:'dis_pct',l:'禁用率%',num:1}], 'dis_pct');
+table('t_cprov', D.cb_prov, [{f:'cat',l:'省'},{f:'units',l:'台数',num:1},{f:'orig_wan',l:'原值(万)',num:1,wan:1},{f:'nbv_wan',l:'净值(万)',num:1,wan:1}], 'units');
+table('t_ccity', D.cb_city, [{f:'cat',l:'城市'},{f:'units',l:'台数',num:1},{f:'orig_wan',l:'原值(万)',num:1,wan:1}], 'units');
+</script>
+</body>
+</html>
