@@ -94,6 +94,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 </div>
 </div>
 
+
 <div class="sect"><h2>二、电柜台账</h2><div class="note">口径：业务系统全量 6,175 台。原值 5,985.5 万为财务账面锚定。仓数、供应商、投产批次来自业务系统；状态组合 = 机柜状态 × 在线状态；组织性质区分在运营与仓库库存。</div>
 <div class="grp">
 <div class="card"><h3>按仓数档</h3><div id="t_cdoor"></div></div>
@@ -144,24 +145,55 @@ function table(el, rows, cols, barKey){
   document.getElementById(el).innerHTML = h + '</tbody></table>';
 }
 
+
 const C_U=[{f:'cat',l:'类别'},{f:'units',l:'台数',num:1}];
 const C_UW=[{f:'cat',l:'类别'},{f:'units',l:'台数',num:1},{f:'orig_wan',l:'原值(万)',num:1,wan:1}];
-table('t_biz', D.ap_biz, C_UW, 'units');
-table('t_own', D.ap_own, C_UW, 'units');
-table('t_life', D.ap_life, C_UW, 'units');
-table('t_qual', D.ap_quality, C_U, 'units');
-table('t_model', D.ap_model, [{f:'cat',l:'型号'},{f:'units',l:'台数',num:1},{f:'orig_wan',l:'原值(万)',num:1,wan:1},{f:'avg_cost',l:'均价',num:1},{f:'fault_units',l:'故障',num:1}], 'units');
-table('t_volt', D.ap_volt, C_UW, 'units');
-table('t_prov', D.ap_prov, [{f:'cat',l:'省'},{f:'units',l:'台数',num:1},{f:'orig_wan',l:'原值(万)',num:1,wan:1},{f:'lease_units',l:'租赁',num:1}], 'units');
-table('t_city', D.ap_city, [{f:'cat',l:'城市'},{f:'units',l:'台数',num:1},{f:'orig_wan',l:'原值(万)',num:1,wan:1},{f:'lease_units',l:'租赁',num:1}], 'units');
-table('t_cdoor', D.cb_door, [{f:'cat',l:'仓数档'},{f:'units',l:'台数',num:1},{f:'orig_wan',l:'原值(万)',num:1,wan:1}], 'units');
-table('t_csup', D.cb_supplier, [{f:'cat',l:'供应商'},{f:'units',l:'台数',num:1},{f:'orig_wan',l:'原值(万)',num:1,wan:1}], 'units');
-table('t_cage', D.cb_age, [{f:'cat',l:'投产月份'},{f:'units',l:'台数',num:1}], 'units');
-table('t_cstatus', D.cb_status, [{f:'cat',l:'状态/在线'},{f:'org_kind',l:'归属'},{f:'units',l:'台数',num:1},{f:'dis_pct',l:'禁用率%',num:1}], 'dis_pct');
-table('t_corg', D.cb_org, C_U, 'units');
-table('t_ccontract', D.cb_contract, [{f:'cat',l:'类别'},{f:'units',l:'台数',num:1},{f:'dis_pct',l:'禁用率%',num:1}], 'dis_pct');
-table('t_cprov', D.cb_prov, [{f:'cat',l:'省'},{f:'units',l:'台数',num:1},{f:'orig_wan',l:'原值(万)',num:1,wan:1},{f:'nbv_wan',l:'净值(万)',num:1,wan:1}], 'units');
-table('t_ccity', D.cb_city, [{f:'cat',l:'城市'},{f:'units',l:'台数',num:1},{f:'orig_wan',l:'原值(万)',num:1,wan:1}], 'units');
+function __t(el, rows, cols, barKey){
+  const tb = document.getElementById(el); if(!tb || !rows) return;
+  const max = barKey ? Math.max(...rows.map(r=>Number(r[barKey]||0)),1) : 0;
+  let h = '<table><thead><tr>' + cols.map(c=>'<th class="'+(c.num?'r':'')+'">'+c.l+'</th>').join('') + (barKey?'<th></th>':'') + '</tr></thead><tbody>';
+  h += rows.map(r=>'<tr>' + cols.map(c=>{
+    let v = r[c.f];
+    if(c.num) v = c.wan ? wan(v) : fmt(v);
+    return '<td class="'+(c.num?'r':'')+'">'+(v===''||v==null?'—':v)+'</td>';
+  }).join('') + (barKey?'<td class="bar"><i style="width:'+Math.round(Number(r[barKey]||0)/max*100)+'%"></i></td>':'') + '</tr>').join('');
+  tb.innerHTML = h + '</tbody></table>';
+}
+if(D.ap_biz){
+const K = D.ap_kpi[0];
+document.getElementById('kpis').innerHTML =
+  kpi('电池 · 在册', fmt(K.onbook), ' 台') +
+  kpi('电池 · 已退出', fmt(K.exited), ' 台') +
+  kpi('电池原值', wan(K.orig_wan), ' 万') +
+  kpi('电池净值', wan(K.nbv_wan), ' 万') +
+  kpi('电柜总数', '6,175', ' 台') +
+  kpi('12仓电柜占比', '99.2%') +
+  kpi('电柜原值', '5,985.5', ' 万') +
+  kpi('在运营电柜', fmt(5630), ' 台');
+__t('t_biz', D.ap_biz, C_UW, 'units');
+__t('t_own', D.ap_own, C_UW, 'units');
+__t('t_life', D.ap_life, C_UW, 'units');
+__t('t_qual', D.ap_quality, C_U, 'units');
+__t('t_model', D.ap_model, [{f:'cat',l:'型号'},{f:'units',l:'台数',num:1},{f:'orig_wan',l:'原值(万)',num:1,wan:1},{f:'avg_cost',l:'均价',num:1},{f:'fault_units',l:'故障',num:1}], 'units');
+__t('t_volt', D.ap_volt, C_UW, 'units');
+__t('t_prov', D.ap_prov, [{f:'cat',l:'省'},{f:'units',l:'台数',num:1},{f:'orig_wan',l:'原值(万)',num:1,wan:1},{f:'lease_units',l:'租赁',num:1}], 'units');
+__t('t_city', D.ap_city, [{f:'cat',l:'城市'},{f:'units',l:'台数',num:1},{f:'orig_wan',l:'原值(万)',num:1,wan:1},{f:'lease_units',l:'租赁',num:1}], 'units');
+__t('t_cdoor', D.cb_door, [{f:'cat',l:'仓数档'},{f:'units',l:'台数',num:1},{f:'orig_wan',l:'原值(万)',num:1,wan:1}], 'units');
+__t('t_csup', D.cb_supplier, [{f:'cat',l:'供应商'},{f:'units',l:'台数',num:1},{f:'orig_wan',l:'原值(万)',num:1,wan:1}], 'units');
+__t('t_cage', D.cb_age, [{f:'cat',l:'投产月份'},{f:'units',l:'台数',num:1}], 'units');
+__t('t_cstatus', D.cb_status, [{f:'cat',l:'状态/在线'},{f:'org_kind',l:'归属'},{f:'units',l:'台数',num:1},{f:'dis_pct',l:'禁用率%',num:1}], 'dis_pct');
+__t('t_corg', D.cb_org, C_U, 'units');
+__t('t_ccontract', D.cb_contract, [{f:'cat',l:'类别'},{f:'units',l:'台数',num:1},{f:'dis_pct',l:'禁用率%',num:1}], 'dis_pct');
+__t('t_cprov', D.cb_prov, [{f:'cat',l:'省'},{f:'units',l:'台数',num:1},{f:'orig_wan',l:'原值(万)',num:1,wan:1},{f:'nbv_wan',l:'净值(万)',num:1,wan:1}], 'units');
+__t('t_ccity', D.cb_city, [{f:'cat',l:'城市'},{f:'units',l:'台数',num:1},{f:'orig_wan',l:'原值(万)',num:1,wan:1}], 'units');
+}
+if(D.hl_kpi && D.hl_kpi.length){
+__t('t_hdist', D.hl_dist, C_U, 'units');
+__t('t_hcurve', D.hl_curve, [{f:'cat',l:'循环档'},{f:'units',l:'台数',num:1},{f:'soh_avg',l:'均SOH%',num:1},{f:'cyc_avg',l:'均循环',num:1}], 'units');
+__t('t_hmodel', D.hl_model, [{f:'cat',l:'型号'},{f:'units',l:'样本',num:1},{f:'soh_avg',l:'均SOH%',num:1},{f:'cyc_avg',l:'均循环',num:1},{f:'cyc_left_avg',l:'剩余循环',num:1},{f:'risk_pct',l:'风险%',num:1}], 'units');
+__t('t_hcity', D.hl_city, [{f:'cat',l:'城市'},{f:'units',l:'样本',num:1},{f:'soh_avg',l:'均SOH%',num:1},{f:'cyc_avg',l:'均循环',num:1},{f:'risk_pct',l:'风险%',num:1}], 'units');
+}
+
 </script>
 </body>
 </html>
