@@ -41,6 +41,7 @@ tr:hover td{background:#f8f9ff}
 .login-box button{width:100%;padding:12px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;border:none;border-radius:8px;font-size:15px;cursor:pointer}
 .login-box button:hover{opacity:.9}
 .login-error{color:#e74c3c;font-size:13px;margin-top:10px;display:none}
+.st{font-weight:700}.st.ok{color:#1a9c4b}.st.warn{color:#c78a00}.st.bad{color:#d64541}.st.todo{color:#667eea}
 @media(max-width:768px){.grp{grid-template-columns:1fr}.login-box{width:90%;padding:30px 20px}}
 </style>
 </head>
@@ -118,6 +119,14 @@ tr:hover td{background:#f8f9ff}
 </div>
 </div>
 
+
+<div class="sect"><h2>八、核对状态看板（标准：≤1% 才算核对上）</h2>
+<div class="note">✅ 已核对（差≤1%） · 🟡 基本核对（1%~2%，差异原因已知） · ❌ 未核对上（&gt;1%） · 🔍 待查。金额单位万元。</div>
+<div class="scroll"><table><thead><tr>
+<th>核对项</th><th>口径A</th><th class="r">A值</th><th>口径B</th><th class="r">B值</th><th class="r">差%</th><th>状态</th><th>说明</th>
+</tr></thead><tbody id="tb_recon"></tbody></table></div>
+</div>
+
 <div class="ft">数据来源：T+ 总账（采购凭证/应付辅助）· 企微流程 flow.payment / contract_seal / approval_field · 业务台账 asset.sn_cost · 运营侧电池订单表-财务（2025-09/11/12 三版）<br>
 口径说明：SN 有票单价覆盖 26,954 台 / 6,994.6万（占账面电池原值 23%），其余批次成本按型号中位价估算；2025-10 前无流程付款数据。</div>
 
@@ -185,6 +194,31 @@ document.getElementById('kpis').innerHTML +=
   kpi('合同已付','27,775.5',' 万') +
   kpi('采购合同','67',' 份') +
   kpi('租赁电池保证金','319.9',' 万/6500组');
+const RECON = [
+ ["博力威 合同已付 vs T+112308","合同台账已付",867.2,"112308 结算流",867.7,0.06,"ok","3份合同，质保金60.9万(4年)已含"],
+ ["欣旺达 合同额 vs T+112308","合同金额",888.0,"112308 结算流",889.9,0.21,"ok","72V58Ah 3000组×2960，企微付款逐笔在案"],
+ ["骑手(直营系) 2025-12","运营月报表 直营+合资",39756,"管理表附表1 自营",40365,-1.51,"warn","含分公司口径差，逐城映射后收拢"],
+ ["电池数量 2025-09-30","运营在用+库存",96806,"台账自有在册",98159,-1.38,"warn","差异=天津自采+测试电池(运营表已剔除)"],
+ ["华友 已付 vs T+112308","合同台账已付",14888.6,"112308 结算流",11853.8,-20.39,"bad","老合同付款不过渡科目；企微96笔户名审批待逐笔追"],
+ ["济源华申 已付 vs T+112308","合同台账已付",10136.5,"112308 结算流",7211.8,-28.85,"bad","同上；蜂巢电芯抵扣路径待拆开"],
+ ["华庚 科目 vs 科迈合同","科迈4848合同金额",525.9,"112308 华庚结算流",11528.6,2092.7,"bad","华庚科目含电柜等其他采购，构成待拆"],
+ ["代理骑手 2025-12","运营月报表(新口径)",4385,"管理表附表1(旧口径)",6863,-36.11,"todo","新旧用户数口径差，价差表自带双列可互验"],
+ ["租赁保证金 vs 租赁合同","企微保证金 319.9万","—","巡鹰+莱迪合同 179.8万","—",null,"todo","保证金≠货款，非核对关系；6500组租赁待建台账"],
+ ["2024H2 电费场租合计","管理表 自营场租电费",2933.2,"T+ 服务费拆解+科目",2926.2,-0.24,"ok","合计闭合；明细拆分比例漂移见下行"],
+ ["2024H2 电费/场租 明细","管理表拆分 18.5%场租","—","T+账面拆分 14.9%","—",null,"todo","摊销类内含场租比例年变(2024≈14% vs 2026≈24%)"],
+ ["2024H2 代理分润","管理表(四)小计",786.6,"T+摘要口径",781.6,-0.64,"ok","认钱不认部门；含天津254.3万"],
+ ["2024H2 折旧","管理表 7/9月",263.8,"T+ 计提",263.9,0.0,"ok","仅7、9两月精确；8/10/12月跨期±6~18%"],
+];
+rows('tb_recon', RECON.map(r=>({a:r[0],oa:r[1],va:r[2],ob:r[3],vb:r[4],diff:r[5],st:r[6],note:r[7]})), [
+  {f:'a'},{f:'oa'},{f:'va',num:1},{f:'ob'},{f:'vb',num:1},
+  {f:'diff',num:1},
+  {f:'st'},
+  {f:'note'},
+]);
+{document.querySelectorAll('#tb_recon tr').forEach((tr,i)=>{
+  const st=RECON[i][6], map={ok:'<span class="st ok">✅ 已核对</span>',warn:'<span class="st warn">🟡 基本核对</span>',bad:'<span class="st bad">❌ 未对上</span>',todo:'<span class="st todo">🔍 待查</span>'};
+  tr.cells[6].innerHTML=map[st]||st;
+});}
 </script>
 </body>
 </html>
