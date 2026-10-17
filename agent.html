@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>代理商与合作商 · 蛮牛管理平台</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:#f5f7fa;color:#333;padding:16px;font-size:13px}
+.hdr{text-align:center;padding:18px 0 14px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;border-radius:12px;margin-bottom:14px}
+.hdr h1{font-size:22px;margin-bottom:4px}
+.hdr .sub{font-size:12px;opacity:.85}
+.nav{text-align:center;margin-bottom:14px}
+.nav a{display:inline-block;margin:0 6px;padding:6px 14px;background:#fff;border-radius:16px;color:#667eea;text-decoration:none;font-size:13px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px}
+.kpi{background:#fff;border-radius:10px;padding:12px 14px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.kpi .v{font-size:20px;font-weight:700;color:#667eea}
+.kpi .v small{font-size:12px;font-weight:400;color:#888}
+.kpi .l{font-size:12px;color:#666;margin-top:2px}
+.sect{background:#fff;border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.sect>h2{font-size:16px;color:#444;margin-bottom:4px;padding-bottom:8px;border-bottom:2px solid #667eea33}
+.sect .note{font-size:12px;color:#999;margin:6px 0 12px}
+.grp{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+.card h3{font-size:13px;color:#555;margin-bottom:6px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:#f0f2f8;color:#667eea;font-weight:600;padding:5px 8px;text-align:left;white-space:nowrap;position:sticky;top:0}
+td{padding:4px 8px;border-bottom:1px solid #f0f0f5;white-space:nowrap}
+td.r,th.r{text-align:right}
+tr:hover td{background:#f8f9ff}
+.scroll{max-height:520px;overflow:auto;border:1px solid #eee;border-radius:8px}
+.ft{font-size:11px;color:#aaa;text-align:center;padding:12px 0 4px;line-height:1.8}
+.tag{display:inline-block;padding:1px 8px;border-radius:8px;font-size:11px;background:#eef0ff;color:#667eea}
+.login-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);display:flex;align-items:center;justify-content:center;z-index:9999}
+.login-box{background:#fff;padding:40px;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.3);width:360px;text-align:center}
+.login-box h2{font-size:22px;margin-bottom:8px;color:#333}
+.login-box p{font-size:13px;color:#999;margin-bottom:25px}
+.login-box input{width:100%;padding:12px 15px;margin-bottom:12px;border:1px solid #ddd;border-radius:8px;font-size:14px;outline:none;box-sizing:border-box}
+.login-box input:focus{border-color:#667eea}
+.login-box button{width:100%;padding:12px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;border:none;border-radius:8px;font-size:15px;cursor:pointer}
+.login-box button:hover{opacity:.9}
+.login-error{color:#e74c3c;font-size:13px;margin-top:10px;display:none}
+.md{font-size:12px;line-height:2;color:#555}
+@media(max-width:768px){.grp{grid-template-columns:1fr}.login-box{width:90%;padding:30px 20px}}
+</style>
+</head>
+<body>
+<div id="loginOverlay" class="login-overlay" style="display:none">
+  <div class="login-box"><h2>🔐 蛮牛管理平台</h2><p>授权用户专用，请登录</p>
+  <input type="text" id="loginUser" placeholder="用户名" autocomplete="username">
+  <input type="password" id="loginPass" placeholder="密码" autocomplete="current-password">
+  <button onclick="doLogin()">登 录</button>
+  <div class="login-error" id="loginError"></div></div>
+</div>
+<div class="hdr"><h1>蛮牛管理平台 · 代理商与合作商</h1><div class="sub">暂独立页 · 以后并入业务模块 · 数据截至 <span id="d"></span></div></div>
+<div class="nav"><a href="/">← 业务看板</a><a href="/finance.html">财务看板</a><a href="/asset.html">资产台账</a><a href="/proc.html">供应链采购</a><a href="/site.html">点位与场地</a><span class="tag">暂独立 · 以后入业务模块</span></div>
+<div class="kpis" id="kpis"></div>
+
+<div class="sect"><h2>一、代理/合作模式十种（企微用章合同实证）</h2>
+<div class="grp"><div class="card md">
+<b>① 城市代理</b>：蛮牛供柜＋电池（资产在蛮牛账，折旧挂代理部门），代理担场租电费＋运营，按月分润。合同：《蛮牛新能源代理合作协议》阜阳 2025-12-30 / 北海 2026-02-03 / 启云航联续签 2026-03-03 / 苏州 MN-DL40002（桂林恒续）2026-10-05<br>
+<b>② 合资公司</b>：《电瓶车租赁合资公司合作协议》阜阳太和 2025-11-24 / 淮北 2026-01-17 / 北海 2026-01-17<br>
+<b>③ 设备买断</b>：呼和浩特电柜采购 2026-03-09 / 南宁柜控 2026-07-07 / 新代理商钣金壳 200 个 2026-05-26<br>
+<b>④ 押金转货款</b>：山东日照补充协议 2026-01-21<br>
+<b>⑤ 代理权转让/换商</b>：昌吉吐鲁番三方转让 2025-10-28；北海换商南宁接手（桂林恒续）2026-09-18
+</div><div class="card md">
+<b>⑥ 分润方式变更</b>：威海助力车「流水进蛮牛」改「利润进蛮牛」（降税务成本）2025-11-02<br>
+<b>⑦ 代理融资</b>：苏州金租保密协议（代理商融资业务）2025-12<br>
+<b>⑧ 合作方（对方担场租电费）</b>：快驴（美团）在营 6 点 8 柜租金电价全空 ✓；青岛美团服务合同 2025-11-25；快递/充电站共建。数据内<b>无「跃拔」主体</b><br>
+<b>⑨ 电池租赁书面化</b>：2026-09 集中补签 11 家代理实体（阜阳蛮牛/宣城蛮牛/南平晟宏/淄博盛万联/潍坊弘荣/三亚同语/丽江云丰/宁波遛牛/岳盛南通/云南虎然/中资环天津）<br>
+<b>⑩ 平台合作</b>：达达换电框架 2026-07 / 蜂鸟入驻 2026-05 / 京东授权 / 天猫代运营（净利润 15% 分润，2026-08 终止催告）/ 农行场景套餐
+</div></div>
+</div>
+
+<div class="sect"><h2>二、代理部门费用四分（T+ 4001 借方，万元）——真分润 ≈ 1,000 万/年</h2>
+<div class="note">代理/西南部门账面 ≠ 分润。四分：通道费（跨城指纹＋票据公司归户）/ 真分润 / 折旧 / 摊销 / 报销。三年合计与账面完全勾稽。管理表「代理分润 2,114 万/年」口径约一半是通道费与折旧摊销。</div>
+<div class="scroll"><table><thead><tr>
+<th>年份</th><th class="r">通道费</th><th class="r">真分润</th><th class="r">折旧</th><th class="r">摊销</th><th class="r">费用报销</th><th class="r">合计</th><th>要点</th>
+</tr></thead><tbody id="tb_quad"></tbody></table></div>
+</div>
+
+<div class="sect"><h2>三、逐代理画像（真分润归户，万元）</h2>
+<div class="note">点位/柜数来自台账；分润=有主凭证归户＋无对手方按部门并入（2026 为 1-9 月）。西安分润疑并入冠宇/曼禾星梦（注册西安、结算乌鲁木齐），归属待拆。</div>
+<div class="scroll"><table><thead><tr>
+<th>代理/渠道</th><th class="r">点位</th><th class="r">有柜</th><th class="r">2024</th><th class="r">2025</th><th class="r">2026(1-9)</th><th>合同与模式要点</th>
+</tr></thead><tbody id="tb_agent"></tbody></table></div>
+</div>
+
+<div class="sect"><h2>四、待办与风险（代理/合作）</h2>
+<div class="md">
+· <b>合同在途</b>：长春星光驳回、盘锦乐租换签未完成、淮北代理协议两度驳回（但合资已签，双轨冲突）<br>
+· <b>宁波换轨</b>：结算从分润（弘兴）改走租赁费摊销（艾可），条款待财务确认<br>
+· <b>天津定性</b>：分公司建制×无租约×快驴共建，模式待确认<br>
+· <b>0 柜清理</b>：兰州 45 点 / 贵阳 / 常熟等无柜点位停滞，清理或激活<br>
+· <b>乌鲁木齐代理协议未见归档</b>：最大代理（年分润 400~600 万）只有结算流水，补合同归档
+</div>
+</div>
+
+<div class="ft">数据来源：企微 flow.contract_seal 用章合同 · T+ 4001 凭证级（部门×对手方匹配）· 业务库 ops.site_ledger<br>
+分析文档：tplus/46 代理商与合作商全档 · 47 代理部门四分口径 · 规则登记册 FS-109~111 · 点位与场租见 <a href="/site.html" style="color:#667eea">点位与场地</a>（doc 45）</div>
+
+<script>
+const AUTH_USER='manniu', AUTH_HASH='8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92';
+async function sha256(t){const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return [...new Uint8Array(d)].map(b=>b.toString(16).padStart(2,'0')).join('')}
+async function doLogin(){
+  const u=document.getElementById('loginUser').value.trim(),p=document.getElementById('loginPass').value,err=document.getElementById('loginError');
+  if(!u||!p){err.style.display='block';err.textContent='请输入用户名和密码';return}
+  if(u===AUTH_USER&&(await sha256(p))===AUTH_HASH){localStorage.setItem('mn_auth','1');document.getElementById('loginOverlay').style.display='none'}
+  else{err.style.display='block';err.textContent='用户名或密码错误'}
+}
+window.addEventListener('DOMContentLoaded',()=>{
+  const o=document.getElementById('loginOverlay');
+  if(localStorage.getItem('mn_auth')==='1'){o.style.display='none'}
+  else{o.style.display='flex';
+    ['loginPass','loginUser'].forEach(id=>document.getElementById(id).addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()}));
+  }
+});
+document.getElementById('d').textContent = new Date().toLocaleDateString('zh-CN');
+const fmt = n => Number(n||0).toLocaleString('zh-CN');
+const wan = n => (n===''||n==null) ? '—' : fmt(Math.round(Number(n)*10)/10);
+function kpi(l,v,u){return `<div class="kpi"><div class="v">${v}<small>${u||''}</small></div><div class="l">${l}</div></div>`}
+
+document.getElementById('kpis').innerHTML =
+  kpi('真代理分润（年化）','≈964',' 万/年') +
+  kpi('代理商点位 / 有柜','986 / 864','') +
+  kpi('西南大区（15 城）','530 / 492',' 点/有柜') +
+  kpi('合资公司点位','60',' 个') +
+  kpi('合作方（快驴等）','9',' 点 11 柜') +
+  kpi('合同在途','3',' 件');
+
+// 二、四分口径
+const QUAD = [
+ ['2024', 790.2, 735.0, 0.0, 164.0, 65.4, '众乐邦/盈通达/添跃（2024 票据公司）已手工移入通道'],
+ ['2025', 650.0, 1027.4, 26.3, 331.1, 114.1, '真分润峰值年'],
+ ['2026(1-9)', 547.0, 722.7, 684.6, 588.9, 110.1, '折旧爆发=宁波 581.7＋青岛 93.5 电池资产入账迁移，非费用恶化；摊销=云服 VAH 电池租赁线'],
+ ['2026 年化', 729.3, 963.6, 912.8, 785.2, 146.8, '×12/9 年化，供年度比较'],
+];
+document.getElementById('tb_quad').innerHTML = QUAD.map(r=>
+ `<tr><td>${r[0]}</td><td class="r">${wan(r[1])}</td><td class="r"><b>${wan(r[2])}</b></td><td class="r">${wan(r[3])}</td><td class="r">${wan(r[4])}</td><td class="r">${wan(r[5])}</td><td class="r">${wan(r[1]+r[2]+r[3]+r[4]+r[5])}</td><td style="white-space:normal">${r[6]}</td></tr>`).join('');
+
+// 三、逐代理画像
+const AGENT = [
+ ['乌鲁木齐','172','167','392.7','624.6','427.2','最大代理；结算主体曼禾星梦→西安冠宇；代理协议未见归档'],
+ ['启航系（新疆县域 ≈30 组织）','≈120','≈110','92.5','146.2','86.6','启云航联续签 2026-03；昌吉吐鲁番三方转让；总部代付资金确认函'],
+ ['宁波','—','—','53.8','139.8','23.2','换电合作协议 2026-01；2026 改走租赁费摊销（艾可），折旧 581.7 挂账'],
+ ['西南大区（福州/厦门等 15 城）','530','492','0','23.4','103.7','2025 立区爬坡；晟宏结算；2026-09 电池租赁补签'],
+ ['宣城（合资）','24','24','0','19.6','31.7','合资实体宣城蛮牛直收；泾县下沉 2026-09'],
+ ['阜阳（合资＋代理双轨）','13','13','0','0.2','22.6','合资 2025-11＋代理协议 2025-12'],
+ ['北海（合资）','23','23','0','0','0','2026-09 换商：南宁代理商（桂林恒续）接手'],
+ ['青岛','—','—','17.0','14.2','15.7','美团合作服务合同；摊销 204.5＋折旧 93.5（2026）'],
+ ['天津（分公司）','347','326','—','—','—','无代理部门无租约；啦啦天津实为全国通道 70.5 万'],
+ ['西安','136','135','—','—','—','疑并入冠宇/曼禾星梦结算，归属待拆'],
+ ['南宁','115','115','—','—','—','柜控采购 2026-07；接手北海'],
+ ['呼和浩特（买断）','34','32','—','—','—','电柜采购合同 2026-03'],
+ ['日照','14','12','3.4','22.0','2.6','押金转货款 2026-01'],
+ ['长春','68','68','—','—','—','星光新合同驳回，在途'],
+ ['盘锦','15','14','—','—','—','乐租换签未完成'],
+ ['无锡/泉州/潍坊/唐山/包头等','245','239','—','—','—','无分润流水；兰州 45 点 0 柜疑停滞'],
+ ['上海居间小代理','—','—','76.0','25.3','8.8','居间介绍点位（仁昌久），2024 后退出'],
+];
+document.getElementById('tb_agent').innerHTML = AGENT.map(r=>
+ `<tr><td>${r[0]}</td><td class="r">${r[1]}</td><td class="r">${r[2]}</td><td class="r">${r[3]}</td><td class="r">${r[4]}</td><td class="r">${r[5]}</td><td style="white-space:normal">${r[6]}</td></tr>`).join('');
+</script>
+</body>
+</html>
