@@ -110,8 +110,31 @@ tr.person{cursor:pointer}
 </tr></thead><tbody id="leave"></tbody></table></div>
 </div>
 
+<div class="sect"><h2>七、2609 期工资三方核实（工资表 × 通讯录 × 账面，2026-10-22）</h2>
+<div class="note">数据源：hr.payroll_detail_ext（附件「202609工资1020.xlsx」120 行全解析）× hr.member × join_leave × 9 月过程稿底稿。全文见 tplus/56。</div>
+<div class="grp">
+<div class="card"><h3>双通道勾稽（2609 期闭环 ✓）</h3><table><thead><tr><th>通道</th><th>审批单</th><th class="r">人/口径</th><th class="r">金额</th></tr></thead><tbody>
+<tr><td>主单（非深圳批）</td><td>202610200037（10-20）</td><td class="r">61 人应发</td><td class="r">626,241.60</td></tr>
+<tr><td>深圳批</td><td>202610200043（10-20「支付深圳9月工资」）</td><td class="r">59 人实发</td><td class="r">670,000.97</td></tr>
+<tr><td><b>合计</b></td><td>应发 626,241.60+678,265.87 ✓</td><td class="r"><b>120 人</b></td><td class="r"><b>应发 1,304,507.47 / 实发 1,167,595.16</b></td></tr>
+</tbody></table><div class="note">深圳批 59 人扣缴仅 1.2%、主单批 61 人扣缴 20.5%（总部高薪集中主单批）。原预测「深圳批 11-21 见单」作废——实际每月 20 日前后双单齐发。61/59 名单级拆分待银行回单。</div></div>
+<div class="card"><h3>结构对比（2609 vs 2608，元）</h3><table><thead><tr><th>期</th><th class="r">人数</th><th class="r">基本</th><th class="r">绩效</th><th class="r">社保公积金</th><th class="r">个税</th><th class="r">实发</th></tr></thead><tbody>
+<tr><td>202608</td><td class="r">123</td><td class="r">539,279</td><td class="r">802,274</td><td class="r">62,892</td><td class="r">54,571</td><td class="r">1,232,722</td></tr>
+<tr><td>202609</td><td class="r">120</td><td class="r">537,896</td><td class="r">661,057</td><td class="r">48,274</td><td class="r"><b>（空）</b></td><td class="r">1,167,595</td></tr>
+</tbody></table><div class="note">⚠ 2609 期个税列全空：四金在单独附件「2026年四金工作表(1).xlsx」未解析入库，扣缴中 <b>88,638.54 元无归属</b>（管道待补）。绩效环比 -14.1 万待确认口径。</div></div>
+</div>
+<div class="md" style="margin-top:10px">
+<b>三方核对结论</b><br>
+· <b>工资表 120 人中 13 人不在企微通讯录（表外发薪 82,234.83 元，占 6.3%）</b>：沙沙（管理 25,000）、孙浩 9,300、于金付 8,300、孙礼洁（研发 8,000）、林菊 6,800、李和国 6,000、路雯婧 5,214、胡容 4,792、夏奭馗 3,150、丁素川 3,000、田阳 2,181、王志恒 997.5、杜二标（保洁 500）——名册中沙沙/赵伟东等已标「仅发薪」来源；13 人 join_leave 无离职记录，<b>待 Miles 逐人指认（沙沙优先）</b><br>
+· <b>通讯录现役 19 人不在工资表</b>（剔除运营商 32 人）：董事会 3 人（合理）；财务部 顾顾/林晓/袁旻 ⚠；天津销售 7 人（疑天津分公司工资单列，参照运城先例）；温巧茂/王燕/王垚/公共账号<br>
+· <b>9 月入离职 5 人全部正确落表</b>：张亚光离职结算 13,586（22 天）、吴亚秋半月 4,390、刘根源 6,220；李洋 13,167、马从平 12,312 入职 ✓<br>
+· <b>账面核对（9 月过程稿）</b>：人工成本 管理 739,509 + 销售 510,225 = 124.97 万，与应发 130.45 万差 5.48 万属<b>结构性差异</b>：账面计提滞后 1~2 期（9 月账还在冲销 7 月深圳服务费计提）、走「服务费」科目而非 2211 工资、含单位社保公积金——不能按月勾稽<br>
+· ⚠ <b>tplus_fin 凭证库为空壳</b>（9 表 0 行），账面核对目前只能依赖 Excel 底稿，T+ 抽取灌库是前置工程
+</div>
+</div>
+
 <div class="ft">数据来源：hr.v_person 五源融合 · hr.salary_approval × hr.salary_voucher_match（T+ 摘要#单号勾对）· hr.payroll_detail_ext（12 期 × 1,513 人次全字段，附件逐行解析）<br>
-规则 hr_dept_payroll / hr_operator_biz / salary_voucher_spno / wecom_attach_alive · 分析文档：tplus/48 人员模块 · 49 业务模块 · 50 工资审批核对 · 本页含薪资与个人信息，禁止截图外发</div>
+规则 hr_dept_payroll / hr_operator_biz / salary_voucher_spno / wecom_attach_alive · 分析文档：tplus/48 人员模块 · 49 业务模块 · 50 工资审批核对 · 56 2609期三方核实 · 本页含薪资与个人信息，禁止截图外发</div>
 
 <script>
 const AUTH_USER='manniu', AUTH_HASH='8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92';
