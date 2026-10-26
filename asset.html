@@ -130,6 +130,80 @@ window.addEventListener('DOMContentLoaded',()=>{
 </div>
 </div>
 
+<div class="sect"><h2>四、电费三线核对与损耗分析（直营口径）</h2><div class="note">三线互验：账单（财务支出）× 电表日读数（物理进电）× 换电 SOC（用户取电）。仅直营；代理/分公司电费归对方。锚点月 2026-09，月度序列 2026-01~09。研究日期 2026-10-26。</div>
+<div class="kpis">
+<div class="kpi"><div class="v">80.2<small>%</small></div><div class="l">综合效率（电表→用户）</div></div>
+<div class="kpi"><div class="v">57~90<small>度</small></div><div class="l">柜均自耗电/月</div></div>
+<div class="kpi"><div class="v">160~275<small>度</small></div><div class="l">柜均损耗合计/月</div></div>
+<div class="kpi"><div class="v">55~95<small>万</small></div><div class="l">月度损耗电费</div></div>
+<div class="kpi"><div class="v">1.7<small>%</small></div><div class="l">账单↔账面残差</div></div>
+<div class="kpi"><div class="v">692<small>台</small></div><div class="l">闲置无用电柜（20.5%）</div></div>
+</div>
+<div class="grp">
+<div class="card"><h3>三线对照（2026-09 直营）</h3><table><thead><tr><th>数据腿</th><th class="r">柜数</th><th class="r">度数</th><th class="r">金额</th></tr></thead><tbody>
+<tr><td>账单（清洗后正常单）</td><td class="r">3,045 柜出账</td><td class="r">244.4 万度</td><td class="r">256.1 万＋异常 18.4 万</td></tr>
+<tr><td>未出账直营柜（电表实测）</td><td class="r">142 柜</td><td class="r">16.3 万度</td><td class="r">≈17.1 万（估）</td></tr>
+<tr><td><b>电表实测总进电</b></td><td class="r">3,324 柜</td><td class="r"><b>≈266 万度</b></td><td class="r">—</td></tr>
+<tr><td><b>SOC 用户实用电量</b></td><td class="r">—</td><td class="r"><b>213.6 万度</b></td><td class="r">—</td></tr>
+<tr><td>账面（直营部分）</td><td class="r">—</td><td class="r">—</td><td class="r">≈296.9 万</td></tr>
+</tbody></table></div>
+<div class="card"><h3>损耗分解（2026-09，每 100 度进电）</h3><table><thead><tr><th>去向</th><th class="r">度数</th><th class="r">占比</th></tr></thead><tbody>
+<tr><td>用户换电拿走（SOC 实测）</td><td class="r">213.6 万度</td><td class="r">80.2%</td></tr>
+<tr><td>柜体自耗电（屏幕/风扇/通信/主控，回归截距 57 度/柜/月）</td><td class="r">≈19.0 万度</td><td class="r">7.1%</td></tr>
+<tr><td>充电机＋电池＋线损（残差，隐含充电效率约 87%）</td><td class="r">≈33.8 万度</td><td class="r">12.7%</td></tr>
+</tbody></table>
+<div class="note">账单→账面：274.5 万＋未出账 17.1 万＝291.6 万 vs 账面直营 ≈296.9 万，残差 5.3 万（1.7%）闭合；电表→账单：实测 266 万度 vs 已计 260.7 万度，差约 2%（周期错位+零读数柜）。</div></div>
+</div>
+<div class="grp" style="margin-top:14px">
+<div class="card"><h3>逐月柜均分解（度/柜/月）</h3><table><thead><tr><th>月份</th><th class="r">电表进电</th><th class="r">用户取电</th><th class="r">差额</th><th class="r">自耗电(估)</th><th class="r">充电线损(估)</th></tr></thead><tbody>
+<tr><td>2026-01</td><td class="r">1,201</td><td class="r">925</td><td class="r">275</td><td class="r">130~210（冬季保温）</td><td class="r">65~145</td></tr>
+<tr><td>2026-02</td><td class="r">747</td><td class="r">590</td><td class="r">156</td><td class="r">~70</td><td class="r">~86</td></tr>
+<tr><td>2026-03</td><td class="r">986</td><td class="r">776</td><td class="r">211</td><td class="r">~90</td><td class="r">~121</td></tr>
+<tr><td>2026-04</td><td class="r">1,002</td><td class="r">776</td><td class="r">226</td><td class="r">~90</td><td class="r">~136</td></tr>
+<tr><td>2026-05</td><td class="r">1,014</td><td class="r">769</td><td class="r">245</td><td class="r">~90</td><td class="r">~155</td></tr>
+<tr><td>2026-06</td><td class="r">887</td><td class="r">704</td><td class="r">183</td><td class="r">~90</td><td class="r">~93</td></tr>
+<tr><td>2026-07</td><td class="r">900</td><td class="r">726</td><td class="r">174</td><td class="r">~90</td><td class="r">~84</td></tr>
+<tr><td>2026-08</td><td class="r">894</td><td class="r">720</td><td class="r">175</td><td class="r">~87</td><td class="r">~88</td></tr>
+<tr><td>2026-09</td><td class="r">834</td><td class="r">674</td><td class="r">160</td><td class="r">~90</td><td class="r">~70</td></tr>
+</tbody></table></div>
+<div class="card"><h3>逐月全司总量（直营约 3,200 柜，万度）</h3><table><thead><tr><th>月份</th><th class="r">进电</th><th class="r">用户取电</th><th class="r">差额</th><th class="r">自耗电</th><th class="r">充电线损</th></tr></thead><tbody>
+<tr><td>2026-01</td><td class="r">378.5</td><td class="r">290.0</td><td class="r">88.5</td><td class="r">~45~65</td><td class="r">~25~45</td></tr>
+<tr><td>2026-02</td><td class="r">236.1</td><td class="r">185.7</td><td class="r">50.4</td><td class="r">~22</td><td class="r">~28</td></tr>
+<tr><td>2026-03</td><td class="r">317.4</td><td class="r">248.0</td><td class="r">69.4</td><td class="r">~29</td><td class="r">~40</td></tr>
+<tr><td>2026-04</td><td class="r">322.6</td><td class="r">248.4</td><td class="r">74.2</td><td class="r">~29</td><td class="r">~45</td></tr>
+<tr><td>2026-05</td><td class="r">324.8</td><td class="r">244.8</td><td class="r">80.0</td><td class="r">~29</td><td class="r">~51</td></tr>
+<tr><td>2026-06</td><td class="r">285.9</td><td class="r">225.5</td><td class="r">60.4</td><td class="r">~29</td><td class="r">~31</td></tr>
+<tr><td>2026-07</td><td class="r">290.2</td><td class="r">231.8</td><td class="r">58.4</td><td class="r">~29</td><td class="r">~29</td></tr>
+<tr><td>2026-08</td><td class="r">287.9</td><td class="r">229.6</td><td class="r">58.3</td><td class="r">~28</td><td class="r">~30</td></tr>
+<tr><td>2026-09</td><td class="r">268.5</td><td class="r">215.7</td><td class="r">52.8</td><td class="r">~29</td><td class="r">~24</td></tr>
+</tbody></table>
+<div class="note">自耗电估计：逐柜回归截距 57~90 度/柜/月（9 月 R²=0.96）；低换电柜实测中位 12~48 度，说明闲置柜会休眠降功耗，自耗电非纯固定值。充电线损＝差额−自耗电，约占用户取电 13~15%；其中混有 SOC 估值腿 ±8% 精度噪声，需抽柜实测标定才能再分。</div></div>
+</div>
+<div class="grp" style="margin-top:14px">
+<div class="card"><h3>系统性问题清单（2026-09 诊断）</h3><table><thead><tr><th>问题</th><th class="r">规模</th><th>性质 / 责任线</th></tr></thead><tbody>
+<tr><td>没有电表但有账单</td><td class="r"><b>0 台</b></td><td>出账柜 100% 有表档有读数，此层干净</td></tr>
+<tr><td>表码静止/估抄但有金额</td><td class="r">15 柜 ≈1.3 万元/月</td><td>估抄/包干 · 运营</td></tr>
+<tr><td>连续三月零读数</td><td class="r">39 柜</td><td>疑似表坏/柜停用 · 运维</td></tr>
+<tr><td>换表复位负读数</td><td class="r">9 柜/月</td><td>换表流程未衔接 · 运维</td></tr>
+<tr><td>金额异常单（&gt;1万或负）</td><td class="r">12 行/月</td><td>红冲待核销 · 财务</td></tr>
+<tr><td>金额≠度数×单价</td><td class="r">57 行/月</td><td>人工调账/价外费用 · 财务</td></tr>
+<tr><td>坏表</td><td class="r">1 台＋5 台负表码</td><td>HC1DSJW53U 单月虚报 442 万度 · 运维换表</td></tr>
+<tr><td>有用电但无账单</td><td class="r">142 柜 16.3 万度/月</td><td>新装未首出，≈17 万元/月账外应计 · 财务</td></tr>
+<tr><td>无账单也无用电（闲置）</td><td class="r"><b>692 柜（20.5%）</b></td><td>闲置/停用仍挂折旧 · 资产组</td></tr>
+<tr><td>台账外直营柜</td><td class="r">578 台</td><td>资产台账漏登，累计已交电费 705 万 · 资产组</td></tr>
+<tr><td>SOC 估值字段 bug</td><td class="r">2026-02/03</td><td>powerconsump 系统性偏低 · IT</td></tr>
+<tr><td>账单周期与自然月错位</td><td class="r">82 柜</td><td>读数周期不统一 · 运营</td></tr>
+</tbody></table></div>
+<div class="card"><h3>长期验证（2025-04 ~ 2026-09）</h3><table><tbody>
+<tr><td>柜级账单系统上线</td><td class="r">2025-04</td><td>此前无柜级数据；现役柜 72.5%（2,021 台）自上线连续出账至今</td></tr>
+<tr><td>账单金额 vs 表码×电价全期偏差</td><td class="r">+1.65%</td><td>5,935.6 万 vs 5,839.2 万，无系统性多收</td></tr>
+<tr><td>复位月金额可信度</td><td class="r">差 0.2%</td><td>2026-01 日读数 383.1 万 vs 金额折算 383.9 万度，人工修正准确</td></tr>
+<tr><td>效率月度趋势</td><td class="r">稳定</td><td>账单口径 84~93%，无恶化</td></tr>
+</tbody></table>
+<div class="note"><b>总评</b>：钱花得没问题（三线互验残差 ≤2%）；不扎实在资产管理——闲置柜 692 台、台账外柜 578 台、账外应计约 17 万/月三笔。规则库：meter_daily_usable / meter_leg_closure / elec_direct_only / meter_reading_diag。</div></div>
+</div>
+</div>
+
 <div class="ft">数据来源：业务库 asset.battery_ledger / asset.cabinet_ledger（thinkserver 每日 05:10 刷新）· 财务锚定：T+ 总账<br>
 口径说明：电池原值 23,876.1 万与财务账面精确勾稽；业务已注销丢失、财务未核销 4,931 台（净值 784.5 万）已单列清单；租赁电池按租金核算不占原值；电柜单柜成本无法区分，原值为整池锚定。</div>
 
